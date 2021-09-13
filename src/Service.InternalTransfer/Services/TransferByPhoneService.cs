@@ -50,7 +50,8 @@ namespace Service.InternalTransfer.Services
             {
                 string destinationWallet = null;
                 string destinationClient = null;
-
+                string senderPhoneNumber = null;
+                
                 var client = await _personalDataService.GetByPhone(request.ToPhoneNumber);
                 if (client.PersonalData != null)
                 {
@@ -62,6 +63,11 @@ namespace Service.InternalTransfer.Services
                     destinationWallet = walletResponse.Wallets.FirstOrDefault()?.WalletId;
                 }
 
+                var sender = await _personalDataService.GetByIdAsync(request.ClientId);
+                if (sender.PersonalData != null)
+                {
+                    senderPhoneNumber = sender.PersonalData.Phone;
+                }
                 var requestId = request.RequestId ?? Guid.NewGuid().ToString("N");
                 var transactionId = OperationIdGenerator.GenerateOperationId(requestId, request.WalletId);
 
@@ -80,7 +86,8 @@ namespace Service.InternalTransfer.Services
                     ClientIp = request.ClientIp,
                     ClientLang = request.ClientLang,
                     DestinationWalletId = destinationWallet,
-                    DestinationClientId = destinationClient
+                    DestinationClientId = destinationClient,
+                    SenderPhoneNumber = senderPhoneNumber
                 };
                 try
                 {
