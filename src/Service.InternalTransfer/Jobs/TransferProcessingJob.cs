@@ -16,7 +16,8 @@ using Service.InternalTransfer.Domain.Models;
 using Service.InternalTransfer.Postgres;
 using Service.InternalTransfer.Postgres.Models;
 using Service.InternalTransfer.Services;
-using SimpleTrading.PersonalData.Abstractions.PersonalData;
+using Service.VerificationCodes.Grpc;
+using Service.VerificationCodes.Grpc.Models;
 using SimpleTrading.PersonalData.Abstractions.PersonalDataUpdate;
 using SimpleTrading.PersonalData.Grpc;
 
@@ -28,7 +29,7 @@ namespace Service.InternalTransfer.Jobs
         private readonly InternalTransferService _transferService;
         private readonly IPublisher<Transfer> _transferPublisher;
         private readonly DbContextOptionsBuilder<DatabaseContext> _dbContextOptionsBuilder;
-        //private readonly ISubscriber<TransferVerificationMessage> _verificationSubscriber;
+        private readonly ITransferVerificationService _verificationService;
         private readonly IPersonalDataServiceGrpc _personalDataService;
         private readonly IClientWalletService _clientWalletService;
         private readonly MyTaskTimer _timer;
@@ -36,10 +37,11 @@ namespace Service.InternalTransfer.Jobs
         public TransferProcessingJob(ILogger<TransferProcessingJob> logger, 
             InternalTransferService transferService, 
             IPublisher<Transfer> transferPublisher,
-            //ISubscriber<TransferVerificationMessage> verificationSubscriber, 
+            ISubscriber<TransferVerificationMessage> verificationSubscriber, 
             DbContextOptionsBuilder<DatabaseContext> dbContextOptionsBuilder, IClientWalletService clientWalletService, 
             ISubscriber<ITraderUpdate> personalDataSubscriber, 
-            IPersonalDataServiceGrpc personalDataService)
+            IPersonalDataServiceGrpc personalDataService,
+            ITransferVerificationService verificationService)
         {
             _logger = logger;
             _transferService = transferService;
@@ -47,9 +49,10 @@ namespace Service.InternalTransfer.Jobs
             _dbContextOptionsBuilder = dbContextOptionsBuilder;
             _clientWalletService = clientWalletService;
             _personalDataService = personalDataService;
+            _verificationService = verificationService;
 
             personalDataSubscriber.Subscribe(HandleTransfersToNewlyRegistered);
-            //_verificationSubscriber = verificationSubscriber;
+            verificationSubscriber.Subscribe(HandleApprovedTransfers);
 
             _timer = new MyTaskTimer(typeof(TransferProcessingJob),
                 TimeSpan.FromSeconds(Program.Settings.TransferProcessingIntervalSec),
@@ -58,11 +61,67 @@ namespace Service.InternalTransfer.Jobs
         
         private async Task DoTime()
         {
+            await HandleExpiringTransfers();
             await HandleCancellingTransfers();
             await HandleNewTransfers();
             await HandlePendingTransfers();
         }
 
+        private async ValueTask HandleApprovedTransfers(TransferVerificationMessage message)
+        {
+            using var activity = MyTelemetry.StartActivity("Handle approved transfers");
+            try
+            {
+                await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
+
+                var sw = new Stopwatch();
+                sw.Start();
+
+                var transfers = await context.Transfers.Where(e =>
+                    e.Status == TransferStatus.ApprovalPending
+                    && e.Id == long.Parse(message.TransferId)).ToListAsync();
+                
+                foreach (var transfer in transfers)
+                    try
+                    {
+                        if (transfer.Cancelling)
+                        {
+                            transfer.Status = TransferStatus.Cancelled;
+                            await PublishSuccess(transfer);
+                            continue;
+                        }
+
+                        transfer.Status = TransferStatus.Pending;
+                        
+                        await PublishSuccess(transfer);
+                    }
+                    catch (Exception ex)
+                    {
+                        await HandleError(transfer, ex);
+                    }
+
+                await context.UpdateAsync(transfers);
+
+                transfers.Count.AddToActivityAsTag("transfers-count");
+
+                sw.Stop();
+                if (transfers.Count > 0)
+                    _logger.LogInformation("Handled {countTrade} approved transfers. Time: {timeRangeText}",
+                        transfers.Count,
+                        sw.Elapsed.ToString());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot Handle approved transfers");
+                ex.FailActivity();
+                throw;
+            }
+
+            _timer.ChangeInterval(
+                TimeSpan.FromSeconds(Program.Settings.TransferProcessingIntervalSec));
+        }
+        
+        
         private async Task HandleNewTransfers()
         {
             using var activity = MyTelemetry.StartActivity("Handle new transfers");
@@ -87,11 +146,23 @@ namespace Service.InternalTransfer.Jobs
                             continue;
                         }
                         
-                        
-                        //WaitForVerification
-                        
-                        
-                        transfer.Status = TransferStatus.Pending;
+                        var response = await _verificationService.SendTransferVerificationCodeAsync(
+                            new SendTransferVerificationCodeRequest()
+                            {
+                                ClientId = transfer.ClientId,
+                                OperationId = transfer.Id.ToString(),
+                                Lang = transfer.ClientLang,
+                                AssetSymbol = transfer.AssetSymbol,
+                                Amount = transfer.Amount.ToString(CultureInfo.InvariantCulture),
+                                DestinationPhone = transfer.DestinationPhoneNumber,
+                                IpAddress = transfer.ClientIp
+                            });
+
+                        if (!response.IsSuccess && !response.ErrorMessage.Contains("Cannot send again code"))
+                            throw new Exception(
+                                $"Failed to send verification email. Error message: {response.ErrorMessage}");
+
+                        transfer.Status = TransferStatus.ApprovalPending;
                         transfer.NotificationTime = DateTime.UtcNow;
                         await PublishSuccess(transfer);
                     }
@@ -227,22 +298,91 @@ namespace Service.InternalTransfer.Jobs
                 TimeSpan.FromSeconds(Program.Settings.TransferProcessingIntervalSec));
         }
 
+        private async Task HandleExpiringTransfers()
+        {
+            using var activity = MyTelemetry.StartActivity("Handle expiring transfers");
+            try
+            {
+                await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
+
+                var sw = new Stopwatch();
+                sw.Start();
+
+                var transfers = await context.Transfers.Where(e =>
+                    e.Status == TransferStatus.ApprovalPending
+                    && e.WorkflowState != WorkflowState.Failed).ToListAsync();
+                
+                foreach (var transfer in transfers)
+                    try
+                    {
+                        if (transfer.Cancelling)
+                        {
+                            transfer.Status = TransferStatus.Cancelled;
+                            await PublishSuccess(transfer);
+                            continue;
+                        }
+                        
+                        if (DateTime.UtcNow - transfer.NotificationTime >=
+                            TimeSpan.FromMinutes(Program.Settings.TransferExpirationTimeInMin))
+                        {
+                            transfer.Status = TransferStatus.Cancelled;
+                            transfer.LastError = "Expired";
+                            await PublishSuccess(transfer);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        await HandleError(transfer, ex);
+                    }
+
+                await context.UpdateAsync(transfers);
+
+                transfers.Count.AddToActivityAsTag("transfers-count");
+
+                sw.Stop();
+                if (transfers.Count > 0)
+                    _logger.LogInformation("Handled {countTrade} expiring transfers. Time: {timeRangeText}",
+                        transfers.Count,
+                        sw.Elapsed.ToString());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot Handle expiring transfers");
+                ex.FailActivity();
+                throw;
+            }
+
+            _timer.ChangeInterval(
+                TimeSpan.FromSeconds(Program.Settings.TransferProcessingIntervalSec));
+        }
         private async ValueTask HandleTransfersToNewlyRegistered(ITraderUpdate traderUpdate)
         {
             using var activity = MyTelemetry.StartActivity("Handle waiting for new users transfers");
             try
             {
+                await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
+                var sw = new Stopwatch();
+                sw.Start();
+                
                 var pd = await _personalDataService.GetByIdAsync(traderUpdate.TraderId);
                 if(pd.PersonalData == null || string.IsNullOrEmpty(pd.PersonalData.Phone) || pd.PersonalData.ConfirmPhone == null)
                     return;
 
                 var phone = pd.PersonalData.Phone;
                 var clientId = pd.PersonalData.Id;
-                
-                await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
 
-                var sw = new Stopwatch();
-                sw.Start();
+                var wallets =
+                    await _clientWalletService.GetWalletsByClient(new JetClientIdentity("jetwallet",
+                        pd.PersonalData.BrandId,
+                        clientId));
+
+                if (wallets.Wallets.Any())
+                {
+                    _logger.LogError("No walletId found for client {clientId}", clientId);
+                    throw new Exception($"No walletId found for client {clientId}");
+                }
+                
+                var walletId = wallets.Wallets.First().WalletId;
 
                 var transfers = await context.Transfers.Where(e =>
                     e.Status == TransferStatus.WaitingForUser
@@ -258,8 +398,9 @@ namespace Service.InternalTransfer.Jobs
                             await PublishSuccess(transfer);
                             continue;
                         }
-
+                        
                         transfer.DestinationClientId = clientId;
+                        transfer.DestinationWalletId = walletId;
                         await _transferService.ExecuteTransferFromServiceWallet(transfer);
                         await PublishSuccess(transfer);
                     }

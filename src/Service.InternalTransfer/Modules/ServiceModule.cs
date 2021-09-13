@@ -9,6 +9,7 @@ using Service.ClientWallets.Client;
 using Service.InternalTransfer.Domain.Models;
 using Service.InternalTransfer.Jobs;
 using Service.InternalTransfer.Services;
+using Service.VerificationCodes.Client;
 using SimpleTrading.PersonalData.Abstractions.PersonalDataUpdate;
 using SimpleTrading.PersonalData.Grpc;
 using SimpleTrading.PersonalData.ServiceBus;
@@ -22,6 +23,7 @@ namespace Service.InternalTransfer.Modules
             var noSqlClient = builder.CreateNoSqlClient(Program.ReloadedSettings(e => e.MyNoSqlReaderHostPort));
             builder.RegisterSpotChangeBalanceGatewayClient(Program.Settings.ChangeBalanceGatewayGrpcServiceUrl);
             builder.RegisterClientWalletsClients(noSqlClient, Program.Settings.ClientWalletsGrpcServiceUrl);
+            builder.RegisterVerificationCodesClient(Program.Settings.VerificationCodesGrpcUrl);
             
             var personalDataClientFactory = new MyGrpcClientFactory(Program.Settings.PersonalDataServiceUrl);
             builder
@@ -34,6 +36,8 @@ namespace Service.InternalTransfer.Modules
 
             var queueName = "Internal-Transfer-Service";
             builder.RegisterMyServiceBusSubscriberSingle<ITraderUpdate>(spotServiceBusClient, TopicNames.PersonalDataUpdate, queueName, TopicQueueType.Permanent);
+            builder.RegisterMyServiceBusSubscriberSingle<TransferVerificationMessage>(spotServiceBusClient,
+                TransferVerificationMessage.TopicName, queueName, TopicQueueType.Permanent);
 
             builder.RegisterType<TransferProcessingJob>().AsSelf().SingleInstance();
             builder.RegisterType<InternalTransferService>().AsSelf().SingleInstance();

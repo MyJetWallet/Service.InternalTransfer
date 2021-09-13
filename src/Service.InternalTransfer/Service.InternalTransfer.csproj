@@ -23,6 +23,7 @@
     <PackageReference Include="MyJetWallet.Sdk.ServiceBus" Version="1.0.3" />
     <PackageReference Include="MyJetWallet.Service.ChangeBalanceGateway.Client" Version="1.7.4" />
     <PackageReference Include="MyJetWallet.Service.ClientWallets.Client" Version="1.2.4" />
+    <PackageReference Include="MyJetWallet.Service.VerificationCodes.Client" Version="1.2.8" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="prometheus-net.AspNetCore" Version="5.0.1" />
     <PackageReference Include="protobuf-net.Grpc.AspNetCore" Version="1.0.152" />

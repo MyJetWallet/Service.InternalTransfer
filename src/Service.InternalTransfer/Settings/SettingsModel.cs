@@ -20,6 +20,9 @@ namespace Service.InternalTransfer.Settings
         [YamlProperty("InternalTransfer.TransferProcessingIntervalSec")]
         public int TransferProcessingIntervalSec { get; set; }
         
+        [YamlProperty("InternalTransfer.TransferExpirationTimeInMin")]
+        public int TransferExpirationTimeInMin { get; set; }
+        
         [YamlProperty("InternalTransfer.TransferRetriesLimit")]
         public int TransferRetriesLimit { get; set; }
         
@@ -41,6 +44,9 @@ namespace Service.InternalTransfer.Settings
         [YamlProperty("InternalTransfer.ChangeBalanceGatewayGrpcServiceUrl")]
         public string ChangeBalanceGatewayGrpcServiceUrl { get; set; }
         
+        [YamlProperty("InternalTransfer.VerificationCodesGrpcUrl")]
+        public string VerificationCodesGrpcUrl { get; set; }
+
         [YamlProperty("InternalTransfer.MyNoSqlReaderHostPort")]
         public string MyNoSqlReaderHostPort { get; set; }
         
