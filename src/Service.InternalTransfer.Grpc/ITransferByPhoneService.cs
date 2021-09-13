@@ -19,5 +19,8 @@ namespace Service.InternalTransfer.Grpc
 
         [OperationContract]
         Task<RetryTransferResponse> RetryWithdrawal(RetryTransferRequest request);
+
+        [OperationContract]
+        Task<GetTransfersResponse> GetTransfers(GetTransfersRequest request);
     }
 }

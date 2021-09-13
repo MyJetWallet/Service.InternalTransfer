@@ -223,5 +223,36 @@ namespace Service.InternalTransfer.Services
                 };
             }
         }
+
+        public async Task<GetTransfersResponse> GetTransfers(GetTransfersRequest request)
+        {
+            try
+            {
+                await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
+                var transfers = await context.Transfers
+                    .Where(e => e.Id > request.LastId)
+                    .OrderByDescending(e => e.Id)
+                    .Take(request.BatchSize)
+                    .ToListAsync();
+
+                var response = new GetTransfersResponse
+                {
+                    Success = true,
+                    Transfers = transfers.Select(e => new Transfer(e)).ToList(),
+                    IdForNextQuery = transfers.Count > 0 ? transfers.Select(e => e.Id).Max() : 0
+                };
+
+                _logger.LogInformation("Return GetTransfers response count items: {count}",
+                    response.Transfers.Count);
+                return response;
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception,
+                    "Cannot get GetWithdrawals take: {takeValue}, LastId: {LastId}",
+                    request.BatchSize, request.LastId);
+                return new GetTransfersResponse {Success = false, ErrorMessage = exception.Message};
+            }        
+        }
     }
 }
