@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="FlexLabs.EntityFrameworkCore.Upsert" Version="5.0.0" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.9">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
+      <PackageReference Include="MyJetWallet.Sdk.Postgres" Version="1.2.0" />
+      <PackageReference Include="MyJetWallet.Sdk.Service" Version="1.5.5" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\src\Service.InternalTransfer.Domain.Models\Service.InternalTransfer.Domain.Models.csproj" />
+    </ItemGroup>
+
+</Project>
