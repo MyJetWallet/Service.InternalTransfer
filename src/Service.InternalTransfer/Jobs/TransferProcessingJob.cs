@@ -355,6 +355,7 @@ namespace Service.InternalTransfer.Jobs
             _timer.ChangeInterval(
                 TimeSpan.FromSeconds(Program.Settings.TransferProcessingIntervalSec));
         }
+        
         private async ValueTask HandleTransfersToNewlyRegistered(ITraderUpdate traderUpdate)
         {
             using var activity = MyTelemetry.StartActivity("Handle waiting for new users transfers");

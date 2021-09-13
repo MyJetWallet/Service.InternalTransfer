@@ -35,6 +35,9 @@ namespace Service.InternalTransfer.Settings
         [YamlProperty("InternalTransfer.ClientWalletsGrpcServiceUrl")]
         public string ClientWalletsGrpcServiceUrl { get; set; }
         
+        [YamlProperty("InternalTransfer.PersonalDataServiceBusHostPort")]
+        public string PersonalDataServiceBusHostPort { get; set; }
+        
         [YamlProperty("InternalTransfer.SpotServiceBusHostPort")]
         public string SpotServiceBusHostPort { get; set; }
         

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using MyJetWallet.Sdk.NoSql;
 using MyJetWallet.Sdk.Service;
 using MyNoSqlServer.DataReader;
 using MyServiceBus.TcpClient;
@@ -10,24 +11,27 @@ namespace Service.InternalTransfer
     public class ApplicationLifetimeManager : ApplicationLifetimeManagerBase
     {
         private readonly ILogger<ApplicationLifetimeManager> _logger;
-        private readonly MyNoSqlTcpClient _myNoSqlTcpClient;
-        private readonly MyServiceBusTcpClient _myServiceBusTcpClient;
+        private readonly MyNoSqlClientLifeTime _myNoSqlClientLifeTime;
+        private readonly MyServiceBusTcpClient[] _myServiceBusTcpClients;
         private readonly TransferProcessingJob _transferProcessingJob;
-        public ApplicationLifetimeManager(IHostApplicationLifetime appLifetime, ILogger<ApplicationLifetimeManager> logger, MyNoSqlTcpClient myNoSqlTcpClient, MyServiceBusTcpClient myServiceBusTcpClient, TransferProcessingJob transferProcessingJob)
+        public ApplicationLifetimeManager(IHostApplicationLifetime appLifetime, ILogger<ApplicationLifetimeManager> logger, MyServiceBusTcpClient[] myServiceBusTcpClients, TransferProcessingJob transferProcessingJob, MyNoSqlClientLifeTime myNoSqlClientLifeTime)
             : base(appLifetime)
         {
             _logger = logger;
-            _myNoSqlTcpClient = myNoSqlTcpClient;
-            _myServiceBusTcpClient = myServiceBusTcpClient;
+            _myServiceBusTcpClients = myServiceBusTcpClients;
             _transferProcessingJob = transferProcessingJob;
+            _myNoSqlClientLifeTime = myNoSqlClientLifeTime;
         }
 
         protected override void OnStarted()
         {
             _logger.LogInformation("OnStarted has been called");
-            _myNoSqlTcpClient.Start();
+            _myNoSqlClientLifeTime.Start();
             _logger.LogInformation("MyNoSqlTcpClient is started");
-            _myServiceBusTcpClient.Start();
+            foreach (var client in _myServiceBusTcpClients)
+            {
+                client.Start();
+            }
             _logger.LogInformation("MyServiceBusTcpClient is started");
             _transferProcessingJob.Start();
             _logger.LogInformation("TransferProcessingJob is started");
@@ -36,9 +40,12 @@ namespace Service.InternalTransfer
         protected override void OnStopping()
         {
             _logger.LogInformation("OnStopping has been called");
-            _myNoSqlTcpClient.Stop();
+            _myNoSqlClientLifeTime.Stop();
             _logger.LogInformation("MyNoSqlTcpClient is stopped");
-            _myServiceBusTcpClient.Stop();
+            foreach (var client in _myServiceBusTcpClients)
+            {
+                client.Stop();
+            }            
             _logger.LogInformation("MyServiceBusTcpClient is stopped");
             _transferProcessingJob.Stop();
             _logger.LogInformation("TransferProcessingJob is stopped");
