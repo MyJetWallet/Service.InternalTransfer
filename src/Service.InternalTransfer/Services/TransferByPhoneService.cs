@@ -8,6 +8,7 @@ using MyJetWallet.Domain;
 using MyJetWallet.Sdk.Service;
 using Newtonsoft.Json;
 using Service.ClientWallets.Grpc;
+using Service.ClientWallets.Grpc.Models;
 using Service.InternalTransfer.Domain.Models;
 using Service.InternalTransfer.Grpc;
 using Service.InternalTransfer.Grpc.Models;
@@ -57,10 +58,18 @@ namespace Service.InternalTransfer.Services
                 {
                     destinationClient = client.PersonalData.Id;
 
-                    var walletResponse = await _clientWalletService.GetWalletsByClient(
-                        new JetClientIdentity(request.BrokerId, client.PersonalData.BrandId, client.PersonalData.Id));
+                    var walletResponse = await _clientWalletService.GetWalletsByClient(new JetClientIdentity(request.BrokerId, client.PersonalData.BrandId, client.PersonalData.Id));
                     
-                    destinationWallet = walletResponse.Wallets.FirstOrDefault()?.WalletId;
+                    if (!walletResponse.Wallets.Any())
+                    {
+                        _logger.LogError("No walletId found for client {clientId}", destinationClient);
+                        return new InternalTransferResponse()
+                        {
+                            ErrorCode = MEErrorCode.WalletDoNotFound
+                        };
+                    }
+                
+                    destinationWallet = walletResponse.Wallets.First().WalletId;
                 }
 
                 var sender = await _personalDataService.GetByIdAsync(request.ClientId);

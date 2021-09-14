@@ -55,7 +55,8 @@ public class DatabaseContext : DbContext
             modelBuilder.Entity<TransferEntity>().HasKey(e => e.Id);
             modelBuilder.Entity<TransferEntity>().Property(e => e.BrokerId).HasMaxLength(128);
             modelBuilder.Entity<TransferEntity>().Property(e => e.ClientId).HasMaxLength(128);
-            modelBuilder.Entity<TransferEntity>().Property(e => e.DestinationClientId).HasMaxLength(128);
+            modelBuilder.Entity<TransferEntity>().Property(e => e.DestinationClientId).HasMaxLength(128).IsRequired(false);;
+            modelBuilder.Entity<TransferEntity>().Property(e => e.DestinationWalletId).HasMaxLength(128).IsRequired(false);;
             modelBuilder.Entity<TransferEntity>().Property(e => e.WalletId).HasMaxLength(128);
             modelBuilder.Entity<TransferEntity>().Property(e => e.TransactionId).HasMaxLength(256);
             modelBuilder.Entity<TransferEntity>().Property(e => e.Amount);
