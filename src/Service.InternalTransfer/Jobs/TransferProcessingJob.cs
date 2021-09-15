@@ -391,7 +391,7 @@ namespace Service.InternalTransfer.Jobs
                         pd.PersonalData.BrandId,
                         clientId));
 
-                if (wallets.Wallets.Any())
+                if (!wallets.Wallets.Any())
                 {
                     _logger.LogError("No walletId found for client {clientId}", clientId);
                     throw new Exception($"No walletId found for client {clientId}");
