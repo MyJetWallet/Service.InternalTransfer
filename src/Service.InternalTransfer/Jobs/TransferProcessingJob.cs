@@ -372,7 +372,7 @@ namespace Service.InternalTransfer.Jobs
         
         private async ValueTask HandleTransfersToNewlyRegistered(ITraderUpdate traderUpdate)
         {
-            using var activity = MyTelemetry.StartActivity("Handle waiting for new users transfers");
+            using var activity = MyTelemetry.StartActivity($"Handle waiting for new users transfer for Client {traderUpdate.TraderId}");
             try
             {
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);

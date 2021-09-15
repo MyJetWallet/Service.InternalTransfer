@@ -1,4 +1,5 @@
 ﻿using Autofac;
+using DotNetCoreDecorators;
 using MyJetWallet.Sdk.Grpc;
 using MyJetWallet.Sdk.NoSql;
 using MyJetWallet.Sdk.Service;
@@ -14,6 +15,7 @@ using Service.VerificationCodes.Client;
 using SimpleTrading.PersonalData.Abstractions.PersonalDataUpdate;
 using SimpleTrading.PersonalData.Grpc;
 using SimpleTrading.PersonalData.ServiceBus;
+using SimpleTrading.PersonalData.ServiceBus.PersonalDataUpdate;
 
 namespace Service.InternalTransfer.Modules
 {
@@ -35,14 +37,16 @@ namespace Service.InternalTransfer.Modules
             var spotServiceBusClient = builder.RegisterMyServiceBusTcpClient(Program.ReloadedSettings(e => e.SpotServiceBusHostPort), ApplicationEnvironment.HostName, Program.LogFactory);
             builder.RegisterMyServiceBusPublisher<Transfer>(spotServiceBusClient, Transfer.TopicName, false);
 
-            var queueName = "Internal-Transfer-Service";
+            var queueName = "Spot-Internal-Transfer-Service";
 
             builder.RegisterMyServiceBusSubscriberSingle<TransferVerificationMessage>(spotServiceBusClient,
                 TransferVerificationMessage.TopicName, queueName, TopicQueueType.Permanent);
 
             var serviceBusClient = MyServiceBusTcpClientFactory.Create(Program.ReloadedSettings(e => e.PersonalDataServiceBusHostPort), ApplicationEnvironment.HostName, Program.LogFactory.CreateLogger("PersonalDataServiceBus"));
             builder.RegisterInstance(serviceBusClient).SingleInstance();
-            builder.RegisterMyServiceBusSubscriberSingle<ITraderUpdate>(serviceBusClient, TopicNames.PersonalDataUpdate, queueName, TopicQueueType.Permanent);      
+            builder.RegisterInstance(new PersonalDataUpdateMyServiceBusSubscriber(serviceBusClient, queueName, TopicQueueType.Permanent, false))
+                .As<ISubscriber<ITraderUpdate>>()
+                .SingleInstance();
             
             builder.RegisterType<TransferProcessingJob>().AsSelf().SingleInstance();
             builder.RegisterType<InternalTransferService>().AsSelf().SingleInstance();
