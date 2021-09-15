@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
@@ -135,13 +136,26 @@ namespace Service.InternalTransfer.Jobs
                 var transfers = await context.Transfers.Where(e =>
                     e.Status == TransferStatus.New
                     && e.WorkflowState != WorkflowState.Failed).ToListAsync();
-                
+
+
+                var whitelist = new List<string>();
+                var whitelistString = Program.ReloadedSettings(e => e.WhitelistedPhones).Invoke();
+                if(!string.IsNullOrWhiteSpace(whitelistString))
+                    whitelist = whitelistString.Split(';').ToList();
+
                 foreach (var transfer in transfers)
                     try
                     {
                         if (transfer.Cancelling)
                         {
                             transfer.Status = TransferStatus.Cancelled;
+                            await PublishSuccess(transfer);
+                            continue;
+                        }
+                        
+                        if (whitelist.Contains(transfer.DestinationPhoneNumber))
+                        {
+                            transfer.Status = TransferStatus.Pending;
                             await PublishSuccess(transfer);
                             continue;
                         }

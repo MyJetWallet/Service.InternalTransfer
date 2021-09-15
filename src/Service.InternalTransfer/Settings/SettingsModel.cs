@@ -53,6 +53,10 @@ namespace Service.InternalTransfer.Settings
         [YamlProperty("InternalTransfer.MyNoSqlReaderHostPort")]
         public string MyNoSqlReaderHostPort { get; set; }
         
+        [YamlProperty("InternalTransfer.WhitelistedPhones")]
+        public string WhitelistedPhones { get; set; }
+        
+        
         
 
     }
