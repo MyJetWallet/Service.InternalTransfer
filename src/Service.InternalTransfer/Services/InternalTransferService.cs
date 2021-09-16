@@ -67,7 +67,7 @@ namespace Service.InternalTransfer.Services
                 throw new Exception(responseCode.ToString());
             }
 
-            transfer.Status = TransferStatus.WaitingForUser;
+            transfer.Status = TransferStatus.Completed;
         }
 
         public async Task RefundTransfer(Transfer transfer)
