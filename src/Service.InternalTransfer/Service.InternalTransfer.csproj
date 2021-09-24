@@ -21,7 +21,7 @@
     <PackageReference Include="MyJetWallet.Sdk.Postgres" Version="1.2.0" />
     <PackageReference Include="MyJetWallet.Sdk.Service" Version="1.5.5" />
     <PackageReference Include="MyJetWallet.Sdk.ServiceBus" Version="1.0.3" />
-    <PackageReference Include="MyJetWallet.Service.ChangeBalanceGateway.Client" Version="1.7.4" />
+    <PackageReference Include="MyJetWallet.Service.ChangeBalanceGateway.Client" Version="1.7.5" />
     <PackageReference Include="MyJetWallet.Service.ClientWallets.Client" Version="1.2.4" />
     <PackageReference Include="MyJetWallet.Service.VerificationCodes.Client" Version="1.2.10" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
