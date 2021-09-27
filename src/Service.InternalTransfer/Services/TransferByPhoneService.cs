@@ -52,7 +52,8 @@ namespace Service.InternalTransfer.Services
                 string destinationWallet = null;
                 string destinationClient = null;
                 string senderPhoneNumber = null;
-                
+                string senderName = null;
+                var receiverIsRegistered = false;
                 var client = await _personalDataService.GetByPhone(request.ToPhoneNumber);
                 if (client.PersonalData != null)
                 {
@@ -70,12 +71,15 @@ namespace Service.InternalTransfer.Services
                     }
                 
                     destinationWallet = walletResponse.Wallets.First().WalletId;
+                    receiverIsRegistered = true;
                 }
 
                 var sender = await _personalDataService.GetByIdAsync(request.ClientId);
                 if (sender.PersonalData != null)
                 {
                     senderPhoneNumber = sender.PersonalData.Phone;
+                    if(!string.IsNullOrWhiteSpace(sender.PersonalData.FirstName) && !string.IsNullOrWhiteSpace(sender.PersonalData.LastName))
+                        senderName = $"{sender.PersonalData.FirstName} {sender.PersonalData.LastName[0]}.";
                 }
                 var requestId = request.RequestId ?? Guid.NewGuid().ToString("N");
                 var transactionId = OperationIdGenerator.GenerateOperationId(requestId, request.WalletId);
@@ -96,7 +100,8 @@ namespace Service.InternalTransfer.Services
                     ClientLang = request.ClientLang,
                     DestinationWalletId = destinationWallet,
                     DestinationClientId = destinationClient,
-                    SenderPhoneNumber = senderPhoneNumber
+                    SenderPhoneNumber = senderPhoneNumber,
+                    SenderName = senderName
                 };
                 try
                 {
@@ -114,7 +119,8 @@ namespace Service.InternalTransfer.Services
 
                 return new InternalTransferResponse()
                 {
-                    TransferId = withdrawalEntity.Id.ToString()
+                    TransferId = withdrawalEntity.Id.ToString(),
+                    ReceiverIsRegistered = receiverIsRegistered
                 };
             }
             catch (Exception ex)

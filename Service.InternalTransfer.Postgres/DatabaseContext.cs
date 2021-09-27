@@ -74,7 +74,7 @@ public class DatabaseContext : DbContext
             modelBuilder.Entity<TransferEntity>().Property(e => e.RefundTransactionId).HasMaxLength(256).IsRequired(false);
             modelBuilder.Entity<TransferEntity>().Property(e => e.MeErrorCode).HasDefaultValue(MEErrorCode.Ok);
             modelBuilder.Entity<TransferEntity>().Property(e => e.WorkflowState).HasDefaultValue(WorkflowState.OK);
-
+            modelBuilder.Entity<TransferEntity>().Property(e => e.SenderName).HasMaxLength(256).IsRequired(false);
 
             modelBuilder.Entity<TransferEntity>().HasIndex(e => e.Status);
             modelBuilder.Entity<TransferEntity>().HasIndex(e => e.TransactionId).IsUnique();

@@ -11,5 +11,8 @@ namespace Service.InternalTransfer.Grpc.Models
         
         [DataMember(Order = 2)]
         public MEErrorCode ErrorCode { get; set; }
+        
+        [DataMember(Order = 3)]
+        public bool ReceiverIsRegistered { get; set; }
     }
 }
