@@ -6,7 +6,7 @@ namespace Service.InternalTransfer.Domain.Models
     [DataContract]
     public class Transfer
     {
-        public Transfer(long id, string brokerId, string clientId, string walletId, string transactionId, double amount, string assetSymbol, string senderPhoneNumber, string destinationPhoneNumber, string destinationClientId, TransferStatus status, string matchingEngineId, string lastError, int retriesCount, DateTime eventDate, string clientLang, string clientIp, DateTime notificationTime, WorkflowState workflowState, string refundTransactionId, bool cancelling, MEErrorCode meErrorCode, string destinationWalletId)
+        public Transfer(long id, string brokerId, string clientId, string walletId, string transactionId, double amount, string assetSymbol, string senderPhoneNumber, string destinationPhoneNumber, string destinationClientId, TransferStatus status, string matchingEngineId, string lastError, int retriesCount, DateTime eventDate, string clientLang, string clientIp, DateTime notificationTime, WorkflowState workflowState, string refundTransactionId, bool cancelling, MEErrorCode meErrorCode, string destinationWalletId, string senderName)
         {
             Id = id;
             BrokerId = brokerId;
@@ -31,9 +31,10 @@ namespace Service.InternalTransfer.Domain.Models
             RefundTransactionId = refundTransactionId;
             Cancelling = cancelling;
             MeErrorCode = meErrorCode;
+            SenderName = senderName;
         }
 
-        public Transfer(Transfer transfer) : this(transfer.Id, transfer.BrokerId, transfer.ClientId, transfer.WalletId, transfer.TransactionId, transfer.Amount, transfer.AssetSymbol, transfer.SenderPhoneNumber, transfer.DestinationPhoneNumber, transfer.DestinationClientId, transfer.Status, transfer.MatchingEngineId, transfer.LastError, transfer.RetriesCount, transfer.EventDate, transfer.ClientLang, transfer.ClientIp, transfer.NotificationTime, transfer.WorkflowState, transfer.RefundTransactionId, transfer.Cancelling, transfer.MeErrorCode, transfer.DestinationWalletId)
+        public Transfer(Transfer transfer) : this(transfer.Id, transfer.BrokerId, transfer.ClientId, transfer.WalletId, transfer.TransactionId, transfer.Amount, transfer.AssetSymbol, transfer.SenderPhoneNumber, transfer.DestinationPhoneNumber, transfer.DestinationClientId, transfer.Status, transfer.MatchingEngineId, transfer.LastError, transfer.RetriesCount, transfer.EventDate, transfer.ClientLang, transfer.ClientIp, transfer.NotificationTime, transfer.WorkflowState, transfer.RefundTransactionId, transfer.Cancelling, transfer.MeErrorCode, transfer.DestinationWalletId, transfer.SenderName)
         {
             
         }
