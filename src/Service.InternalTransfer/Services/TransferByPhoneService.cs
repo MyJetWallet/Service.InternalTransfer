@@ -78,6 +78,9 @@ namespace Service.InternalTransfer.Services
                 if (sender.PersonalData != null)
                 {
                     senderPhoneNumber = sender.PersonalData.Phone;
+                    if(!string.IsNullOrWhiteSpace(sender.PersonalData.FirstName))
+                        senderName = $"{sender.PersonalData.FirstName}";
+                    
                     if(!string.IsNullOrWhiteSpace(sender.PersonalData.FirstName) && !string.IsNullOrWhiteSpace(sender.PersonalData.LastName))
                         senderName = $"{sender.PersonalData.FirstName} {sender.PersonalData.LastName[0]}.";
                 }
