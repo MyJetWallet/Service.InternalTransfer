@@ -8,15 +8,13 @@ using MyJetWallet.Domain;
 using MyJetWallet.Sdk.Service;
 using Newtonsoft.Json;
 using Service.ClientWallets.Grpc;
-using Service.ClientWallets.Grpc.Models;
 using Service.InternalTransfer.Domain.Models;
 using Service.InternalTransfer.Grpc;
 using Service.InternalTransfer.Grpc.Models;
 using Service.InternalTransfer.Postgres;
 using Service.InternalTransfer.Postgres.Models;
-using Service.InternalTransfer.Settings;
-using SimpleTrading.PersonalData.Abstractions.PersonalData;
-using SimpleTrading.PersonalData.Grpc;
+using Service.PersonalData.Grpc;
+using Service.PersonalData.Grpc.Contracts;
 
 namespace Service.InternalTransfer.Services
 {
@@ -54,7 +52,11 @@ namespace Service.InternalTransfer.Services
                 string senderPhoneNumber = null;
                 string senderName = null;
                 var receiverIsRegistered = false;
-                var client = await _personalDataService.GetByPhone(request.ToPhoneNumber);
+                var client = await _personalDataService.GetByPhone(
+                    new GetByPhoneRequest()
+                    {
+                        Phone = request.ToPhoneNumber
+                    });
                 if (client.PersonalData != null)
                 {
                     destinationClient = client.PersonalData.Id;
@@ -74,7 +76,10 @@ namespace Service.InternalTransfer.Services
                     receiverIsRegistered = true;
                 }
 
-                var sender = await _personalDataService.GetByIdAsync(request.ClientId);
+                var sender = await _personalDataService.GetByIdAsync(new GetByIdRequest()
+                {
+                    Id = request.ClientId
+                });
                 if (sender.PersonalData != null)
                 {
                     senderPhoneNumber = sender.PersonalData.Phone;

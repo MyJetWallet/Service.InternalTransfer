@@ -17,10 +17,12 @@ using Service.InternalTransfer.Domain.Models;
 using Service.InternalTransfer.Postgres;
 using Service.InternalTransfer.Postgres.Models;
 using Service.InternalTransfer.Services;
+using Service.PersonalData.Domain.Models.ServiceBus;
+using Service.PersonalData.Grpc;
+using Service.PersonalData.Grpc.Contracts;
 using Service.VerificationCodes.Grpc;
 using Service.VerificationCodes.Grpc.Models;
 using SimpleTrading.PersonalData.Abstractions.PersonalDataUpdate;
-using SimpleTrading.PersonalData.Grpc;
 
 namespace Service.InternalTransfer.Jobs
 {
@@ -40,7 +42,7 @@ namespace Service.InternalTransfer.Jobs
             IPublisher<Transfer> transferPublisher,
             ISubscriber<TransferVerificationMessage> verificationSubscriber, 
             DbContextOptionsBuilder<DatabaseContext> dbContextOptionsBuilder, IClientWalletService clientWalletService, 
-            ISubscriber<ITraderUpdate> personalDataSubscriber, 
+            ISubscriber<IReadOnlyList<PersonalDataUpdateMessage>> personalDataSubscriber, 
             IPersonalDataServiceGrpc personalDataService,
             ITransferVerificationService verificationService)
         {
@@ -370,79 +372,89 @@ namespace Service.InternalTransfer.Jobs
                 TimeSpan.FromSeconds(Program.Settings.TransferProcessingIntervalSec));
         }
         
-        private async ValueTask HandleTransfersToNewlyRegistered(ITraderUpdate traderUpdate)
+        private async ValueTask HandleTransfersToNewlyRegistered(IReadOnlyList<PersonalDataUpdateMessage> traderUpdates)
         {
-            using var activity = MyTelemetry.StartActivity($"Handle waiting for new users transfer for Client {traderUpdate.TraderId}");
-            try
+            foreach (var traderUpdate in traderUpdates)
             {
-                await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
-                var sw = new Stopwatch();
-                sw.Start();
-                
-                var pd = await _personalDataService.GetByIdAsync(traderUpdate.TraderId);
-                if(pd.PersonalData == null || string.IsNullOrEmpty(pd.PersonalData.Phone) || pd.PersonalData.ConfirmPhone == null)
-                    return;
-
-                var phone = pd.PersonalData.Phone;
-                var clientId = pd.PersonalData.Id;
-
-                var wallets =
-                    await _clientWalletService.GetWalletsByClient(new JetClientIdentity("jetwallet",
-                        pd.PersonalData.BrandId,
-                        clientId));
-
-                if (!wallets.Wallets.Any())
+                using var activity =
+                    MyTelemetry.StartActivity(
+                        $"Handle waiting for new users transfer for Client {traderUpdate.TraderId}");
+                try
                 {
-                    _logger.LogError("No walletId found for client {clientId}", clientId);
-                    throw new Exception($"No walletId found for client {clientId}");
-                }
-                
-                var walletId = wallets.Wallets.First().WalletId;
+                    await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
+                    var sw = new Stopwatch();
+                    sw.Start();
 
-                var transfers = await context.Transfers.Where(e =>
-                    e.Status == TransferStatus.WaitingForUser
-                    && e.DestinationPhoneNumber == phone
-                    && e.WorkflowState != WorkflowState.Failed).ToListAsync();
-                
-                foreach (var transfer in transfers)
-                    try
+                    var pd = await _personalDataService.GetByIdAsync(new GetByIdRequest()
                     {
-                        if (transfer.Cancelling)
+                        Id = traderUpdate.TraderId
+                    });
+                    if (pd.PersonalData == null || string.IsNullOrEmpty(pd.PersonalData.Phone) ||
+                        pd.PersonalData.ConfirmPhone == null)
+                        return;
+
+                    var phone = pd.PersonalData.Phone;
+                    var clientId = pd.PersonalData.Id;
+
+                    var wallets =
+                        await _clientWalletService.GetWalletsByClient(new JetClientIdentity("jetwallet",
+                            pd.PersonalData.BrandId,
+                            clientId));
+
+                    if (!wallets.Wallets.Any())
+                    {
+                        _logger.LogError("No walletId found for client {clientId}", clientId);
+                        throw new Exception($"No walletId found for client {clientId}");
+                    }
+
+                    var walletId = wallets.Wallets.First().WalletId;
+
+                    var transfers = await context.Transfers.Where(e =>
+                        e.Status == TransferStatus.WaitingForUser
+                        && e.DestinationPhoneNumber == phone
+                        && e.WorkflowState != WorkflowState.Failed).ToListAsync();
+
+                    foreach (var transfer in transfers)
+                        try
                         {
-                            await _transferService.RefundTransfer(transfer);
+                            if (transfer.Cancelling)
+                            {
+                                await _transferService.RefundTransfer(transfer);
+                                await PublishSuccess(transfer);
+                                continue;
+                            }
+
+                            transfer.DestinationClientId = clientId;
+                            transfer.DestinationWalletId = walletId;
+                            await _transferService.ExecuteTransferFromServiceWallet(transfer);
                             await PublishSuccess(transfer);
-                            continue;
                         }
-                        
-                        transfer.DestinationClientId = clientId;
-                        transfer.DestinationWalletId = walletId;
-                        await _transferService.ExecuteTransferFromServiceWallet(transfer);
-                        await PublishSuccess(transfer);
-                    }
-                    catch (Exception ex)
-                    {
-                        await HandleError(transfer, ex);
-                    }
+                        catch (Exception ex)
+                        {
+                            await HandleError(transfer, ex);
+                        }
 
-                await context.UpdateAsync(transfers);
+                    await context.UpdateAsync(transfers);
 
-                transfers.Count.AddToActivityAsTag("transfers-count");
+                    transfers.Count.AddToActivityAsTag("transfers-count");
 
-                sw.Stop();
-                if (transfers.Count > 0)
-                    _logger.LogInformation("Handled {countTrade} waiting for new users  transfers. Time: {timeRangeText}",
-                        transfers.Count,
-                        sw.Elapsed.ToString());
+                    sw.Stop();
+                    if (transfers.Count > 0)
+                        _logger.LogInformation(
+                            "Handled {countTrade} waiting for new users  transfers. Time: {timeRangeText}",
+                            transfers.Count,
+                            sw.Elapsed.ToString());
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Cannot Handle waiting for new users  transfers");
+                    ex.FailActivity();
+                    throw;
+                }
+
+                _timer.ChangeInterval(
+                    TimeSpan.FromSeconds(Program.Settings.TransferProcessingIntervalSec));
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Cannot Handle waiting for new users  transfers");
-                ex.FailActivity();
-                throw;
-            }
-
-            _timer.ChangeInterval(
-                TimeSpan.FromSeconds(Program.Settings.TransferProcessingIntervalSec));
         }
         
         private async Task HandleError(TransferEntity transfer, Exception ex, bool retrying = true)
