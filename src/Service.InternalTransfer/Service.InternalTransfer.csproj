@@ -22,7 +22,7 @@
     <PackageReference Include="MyJetWallet.Sdk.Service" Version="1.6.0" />
     <PackageReference Include="MyJetWallet.Sdk.ServiceBus" Version="1.0.4" />
     <PackageReference Include="MyJetWallet.Service.ChangeBalanceGateway.Client" Version="1.7.5" />
-    <PackageReference Include="MyJetWallet.Service.PersonalData.Client" Version="1.0.0" />
+    <PackageReference Include="MyJetWallet.Service.PersonalData.Client" Version="1.0.1" />
     <PackageReference Include="MyJetWallet.Service.ClientWallets.Client" Version="1.2.5" />
     <PackageReference Include="MyJetWallet.Service.VerificationCodes.Client" Version="1.2.12" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
