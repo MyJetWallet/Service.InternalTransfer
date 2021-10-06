@@ -22,5 +22,9 @@ namespace Service.InternalTransfer.Grpc
 
         [OperationContract]
         Task<GetTransfersResponse> GetTransfers(GetTransfersRequest request);
+
+        [OperationContract]
+        Task<ResendTransferVerificationResponse> ResendTransferConfirmationEmail(
+            ResendTransferVerificationRequest request);
     }
 }

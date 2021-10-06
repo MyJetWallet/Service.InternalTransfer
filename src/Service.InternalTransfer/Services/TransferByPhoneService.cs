@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using DotNetCoreDecorators;
@@ -15,6 +17,8 @@ using Service.InternalTransfer.Postgres;
 using Service.InternalTransfer.Postgres.Models;
 using Service.PersonalData.Grpc;
 using Service.PersonalData.Grpc.Contracts;
+using Service.VerificationCodes.Grpc;
+using Service.VerificationCodes.Grpc.Models;
 
 namespace Service.InternalTransfer.Services
 {
@@ -26,8 +30,9 @@ namespace Service.InternalTransfer.Services
         private readonly IClientWalletService _clientWalletService;
         private readonly IPublisher<Transfer> _transferPublisher;
         private readonly InternalTransferService _transferService;
+        private readonly ITransferVerificationService _verificationService;
 
-        public TransferByPhoneService(ILogger<TransferByPhoneService> logger, DbContextOptionsBuilder<DatabaseContext> dbContextOptionsBuilder, IPersonalDataServiceGrpc personalDataService, IClientWalletService clientWalletService, IPublisher<Transfer> transferPublisher, InternalTransferService transferService)
+        public TransferByPhoneService(ILogger<TransferByPhoneService> logger, DbContextOptionsBuilder<DatabaseContext> dbContextOptionsBuilder, IPersonalDataServiceGrpc personalDataService, IClientWalletService clientWalletService, IPublisher<Transfer> transferPublisher, InternalTransferService transferService, ITransferVerificationService verificationService)
         {
             _logger = logger;
             _dbContextOptionsBuilder = dbContextOptionsBuilder;
@@ -35,11 +40,12 @@ namespace Service.InternalTransfer.Services
             _clientWalletService = clientWalletService;
             _transferPublisher = transferPublisher;
             _transferService = transferService;
+            _verificationService = verificationService;
         }
 
         public async Task<InternalTransferResponse> TransferByPhone(TransferByPhoneRequest request)
         {
-            _logger.LogDebug("Receive CryptoWithdrawalRequest: {jsonText}", JsonConvert.SerializeObject(request));
+            _logger.LogDebug("Receive TransferByPhoneRequest: {jsonText}", JsonConvert.SerializeObject(request));
             request.WalletId.AddToActivityAsTag("walletId");
             request.ClientId.AddToActivityAsTag("clientId");
             request.BrokerId.AddToActivityAsTag("brokerId");
@@ -283,6 +289,93 @@ namespace Service.InternalTransfer.Services
                     request.BatchSize, request.LastId);
                 return new GetTransfersResponse {Success = false, ErrorMessage = exception.Message};
             }        
+        }
+        
+        public async Task<ResendTransferVerificationResponse> ResendTransferConfirmationEmail(ResendTransferVerificationRequest request)
+        {
+            using var activity = MyTelemetry.StartActivity("Handle transfer verification resend")
+                .AddTag("TransferId", request.Id);
+            _logger.LogInformation("Handle transfer verification resend: {transferId}", request.Id);
+            try
+            {
+                await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
+
+                var transferEntity = await context.Transfers.FindAsync(request.Id);
+
+                if (transferEntity == null)
+                {
+                    _logger.LogInformation("Unable to find transfer with id {transferId}", request.Id);
+                    return new ResendTransferVerificationResponse
+                    {
+                        Success = false,
+                        ErrorMessage = "Unable to find transfer",
+                        Id = request.Id
+                    };
+                }
+
+                if (transferEntity.Status != TransferStatus.ApprovalPending)
+                {
+                    return new ResendTransferVerificationResponse
+                    {
+                        Success = true,
+                        Id = request.Id
+                    };
+                }
+
+                var response = await _verificationService.SendTransferVerificationCodeAsync(
+                    new SendTransferVerificationCodeRequest()
+                    {
+                        ClientId = transferEntity.ClientId,
+                        OperationId = transferEntity.Id.ToString(),
+                        Lang = transferEntity.ClientLang,
+                        AssetSymbol = transferEntity.AssetSymbol,
+                        Amount = transferEntity.Amount.ToString(CultureInfo.InvariantCulture),
+                        DestinationPhone = transferEntity.DestinationPhoneNumber,
+                        IpAddress = transferEntity.ClientIp
+                    });
+
+                if (!response.IsSuccess)
+                {
+                    if (response.ErrorMessage.Contains("Cannot send again code"))
+                    {
+                        return new ResendTransferVerificationResponse
+                        {
+                            Success = true,
+                            Id = request.Id
+                        };
+                    }
+                    
+                    return new ResendTransferVerificationResponse
+                    {
+                        Success = false,
+                        ErrorMessage = response.ErrorMessage,
+                        Id = request.Id
+                    };
+                }
+                
+                transferEntity.NotificationTime = DateTime.UtcNow;
+                await context.UpdateAsync(new List<TransferEntity> {transferEntity});
+
+                _logger.LogInformation("Handled transfer verification resend: {transferId}", request.Id);
+                return new ResendTransferVerificationResponse
+                {
+                    Success = true,
+                    Id = request.Id
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot Handle transfer verification resend");
+                ex.FailActivity();
+
+                return new ResendTransferVerificationResponse
+                {
+                    Success = false,
+                    ErrorMessage = $"Internal error {ex.Message}",
+                    Id = request.Id
+                };
+            }
+            
         }
     }
 }
