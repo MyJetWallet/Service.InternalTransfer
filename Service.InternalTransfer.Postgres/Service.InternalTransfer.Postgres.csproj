@@ -11,7 +11,7 @@
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
       <PackageReference Include="MyJetWallet.Sdk.Postgres" Version="1.2.0" />
-      <PackageReference Include="MyJetWallet.Sdk.Service" Version="1.6.6" />
+      <PackageReference Include="MyJetWallet.Sdk.Service" Version="1.6.9" />
     </ItemGroup>
 
     <ItemGroup>
