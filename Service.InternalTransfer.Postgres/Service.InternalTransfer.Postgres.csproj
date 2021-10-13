@@ -6,12 +6,12 @@
 
     <ItemGroup>
       <PackageReference Include="FlexLabs.EntityFrameworkCore.Upsert" Version="5.0.0" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.10">
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.11">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
       <PackageReference Include="MyJetWallet.Sdk.Postgres" Version="1.2.0" />
-      <PackageReference Include="MyJetWallet.Sdk.Service" Version="1.6.9" />
+      <PackageReference Include="MyJetWallet.Sdk.Service" Version="1.6.10" />
     </ItemGroup>
 
     <ItemGroup>
