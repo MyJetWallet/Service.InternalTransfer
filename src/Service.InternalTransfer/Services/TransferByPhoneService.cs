@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Domain;
 using MyJetWallet.Sdk.Service;
+using MyJetWallet.Sdk.ServiceBus;
 using Newtonsoft.Json;
 using Service.ClientWallets.Grpc;
 using Service.InternalTransfer.Domain.Models;
@@ -28,11 +29,11 @@ namespace Service.InternalTransfer.Services
         private readonly DbContextOptionsBuilder<DatabaseContext> _dbContextOptionsBuilder;
         private readonly IPersonalDataServiceGrpc _personalDataService;
         private readonly IClientWalletService _clientWalletService;
-        private readonly IPublisher<Transfer> _transferPublisher;
+        private readonly IServiceBusPublisher<Transfer> _transferPublisher;
         private readonly InternalTransferService _transferService;
         private readonly ITransferVerificationService _verificationService;
 
-        public TransferByPhoneService(ILogger<TransferByPhoneService> logger, DbContextOptionsBuilder<DatabaseContext> dbContextOptionsBuilder, IPersonalDataServiceGrpc personalDataService, IClientWalletService clientWalletService, IPublisher<Transfer> transferPublisher, InternalTransferService transferService, ITransferVerificationService verificationService)
+        public TransferByPhoneService(ILogger<TransferByPhoneService> logger, DbContextOptionsBuilder<DatabaseContext> dbContextOptionsBuilder, IPersonalDataServiceGrpc personalDataService, IClientWalletService clientWalletService, IServiceBusPublisher<Transfer> transferPublisher, InternalTransferService transferService, ITransferVerificationService verificationService)
         {
             _logger = logger;
             _dbContextOptionsBuilder = dbContextOptionsBuilder;

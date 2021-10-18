@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using MyJetWallet.Domain;
 using MyJetWallet.Sdk.Service;
 using MyJetWallet.Sdk.Service.Tools;
+using MyJetWallet.Sdk.ServiceBus;
 using Newtonsoft.Json;
 using Service.ClientWallets.Grpc;
 using Service.ClientWallets.Grpc.Models;
@@ -30,7 +31,7 @@ namespace Service.InternalTransfer.Jobs
     {
         private readonly ILogger<TransferProcessingJob> _logger;
         private readonly InternalTransferService _transferService;
-        private readonly IPublisher<Transfer> _transferPublisher;
+        private readonly IServiceBusPublisher<Transfer> _transferPublisher;
         private readonly DbContextOptionsBuilder<DatabaseContext> _dbContextOptionsBuilder;
         private readonly ITransferVerificationService _verificationService;
         private readonly IPersonalDataServiceGrpc _personalDataService;
@@ -39,7 +40,7 @@ namespace Service.InternalTransfer.Jobs
         
         public TransferProcessingJob(ILogger<TransferProcessingJob> logger, 
             InternalTransferService transferService, 
-            IPublisher<Transfer> transferPublisher,
+            IServiceBusPublisher<Transfer> transferPublisher,
             ISubscriber<TransferVerificationMessage> verificationSubscriber, 
             DbContextOptionsBuilder<DatabaseContext> dbContextOptionsBuilder, IClientWalletService clientWalletService, 
             ISubscriber<IReadOnlyList<PersonalDataUpdateMessage>> personalDataSubscriber, 

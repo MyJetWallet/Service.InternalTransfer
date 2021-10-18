@@ -22,7 +22,7 @@ namespace Service.InternalTransfer.Modules
             builder.RegisterClientWalletsClients(noSqlClient, Program.Settings.ClientWalletsGrpcServiceUrl);
             builder.RegisterVerificationCodesClient(Program.Settings.VerificationCodesGrpcUrl);
             
-            var spotServiceBusClient = builder.RegisterMyServiceBusTcpClient(Program.ReloadedSettings(e => e.SpotServiceBusHostPort), ApplicationEnvironment.HostName, Program.LogFactory);
+            var spotServiceBusClient = builder.RegisterMyServiceBusTcpClient(Program.ReloadedSettings(e => e.SpotServiceBusHostPort), Program.LogFactory);
             builder.RegisterMyServiceBusPublisher<Transfer>(spotServiceBusClient, Transfer.TopicName, false);
 
             var queueName = "Spot-Internal-Transfer-Service";
