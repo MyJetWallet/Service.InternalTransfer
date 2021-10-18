@@ -268,7 +268,7 @@ namespace Service.InternalTransfer.Jobs
         
         private async Task HandleCancellingTransfers()
         {
-            using var activity = MyTelemetry.StartActivity("Handle cancelling transfers");
+            using var activity = MyTelemetry.StartActivity("Handle waiting for user transfers");
             try
             {
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
@@ -300,13 +300,13 @@ namespace Service.InternalTransfer.Jobs
 
                 sw.Stop();
                 if (transfers.Count > 0)
-                    _logger.LogInformation("Handled {countTrade} cancelling transfers. Time: {timeRangeText}",
+                    _logger.LogInformation("Handled {countTrade} waiting for user transfers. Time: {timeRangeText}",
                         transfers.Count,
                         sw.Elapsed.ToString());
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Cannot Handle cancelling transfers");
+                _logger.LogError(ex, "Cannot Handle waiting for user  transfers");
                 ex.FailActivity();
                 throw;
             }
