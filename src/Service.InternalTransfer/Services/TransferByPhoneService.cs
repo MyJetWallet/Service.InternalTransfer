@@ -62,7 +62,7 @@ namespace Service.InternalTransfer.Services
                 var client = await _personalDataService.GetByPhone(
                     new GetByPhoneRequest()
                     {
-                        Phone = request.ToPhoneNumber
+                        Phone = request.ToPhoneNumber.Trim('+')
                     });
                 if (client.PersonalData != null)
                 {
