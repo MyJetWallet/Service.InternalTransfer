@@ -27,5 +27,6 @@ namespace Service.InternalTransfer.Client
         {
             builder.RegisterMyServiceBusSubscriberBatch<Transfer>(serviceBusClient, Transfer.TopicName, queue,
                 TopicQueueType.Permanent);
-        }    }
+        }    
+    }
 }

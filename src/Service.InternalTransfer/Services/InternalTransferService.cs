@@ -9,6 +9,7 @@ using Service.ChangeBalanceGateway.Grpc;
 using Service.ChangeBalanceGateway.Grpc.Models;
 using Service.InternalTransfer.Domain.Models;
 using Service.InternalTransfer.Postgres.Models;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 using TransactionStatus = MyJetWallet.Domain.Transactions.TransactionStatus;
 
 namespace Service.InternalTransfer.Services
@@ -28,6 +29,7 @@ namespace Service.InternalTransfer.Services
 
         public async Task ExecuteTransfer(Transfer transfer)
         {
+            _logger.LogInformation("Executing transfer to user. Transfer id: {transferId}", transfer.Id);
             var responseCode = await SendTransferAsync(transfer.ClientId, transfer.WalletId,
                 transfer.DestinationWalletId, transfer.TransactionId, transfer.Amount, transfer.AssetSymbol,
                 transfer.BrokerId);
@@ -42,6 +44,7 @@ namespace Service.InternalTransfer.Services
 
         public async Task ExecuteTransferToServiceWallet(Transfer transfer)
         {
+            _logger.LogInformation("Executing transfer to service wallet. Transfer id: {transferId}", transfer.Id);
             var responseCode = await SendTransferAsync(transfer.ClientId, transfer.WalletId,
                 Program.Settings.BufferWalletId, transfer.TransactionId, transfer.Amount, transfer.AssetSymbol,
                 transfer.BrokerId);
@@ -57,6 +60,7 @@ namespace Service.InternalTransfer.Services
 
         public async Task ExecuteTransferFromServiceWallet(Transfer transfer)
         {
+            _logger.LogInformation("Executing transfer from service wallet. Transfer id: {transferId}", transfer.Id);
             var responseCode = await SendTransferAsync(Program.Settings.BufferClientId, Program.Settings.BufferWalletId,
                 transfer.DestinationWalletId, transfer.TransactionId, transfer.Amount, transfer.AssetSymbol,
                 transfer.BrokerId);
@@ -73,6 +77,8 @@ namespace Service.InternalTransfer.Services
         public async Task RefundTransfer(Transfer transfer)
         {
             transfer.RefundTransactionId = OperationIdGenerator.GenerateOperationId("refund", transfer.TransactionId);
+            _logger.LogInformation("Refunding transfer id: {transferId}. Refund operation id {refundId}", transfer.Id, transfer.RefundTransactionId);
+            
             var responseCode = await SendTransferAsync(Program.Settings.BufferClientId, Program.Settings.BufferWalletId,
                 transfer.WalletId, transfer.RefundTransactionId, transfer.Amount, transfer.AssetSymbol,
                 transfer.BrokerId);
@@ -102,7 +108,8 @@ namespace Service.InternalTransfer.Services
                 Txid = string.Empty,
                 Status = TransactionStatus.New
             };
-
+            
+            _logger.LogInformation("Executing internal transfer on ME. Request: {request}", JsonConvert.SerializeObject(request));
             var changeBalanceResult = await _changeBalanceService.InternalTransferAsync(request);
 
             if (changeBalanceResult.ErrorCode == ChangeBalanceGrpcResponse.ErrorCodeEnum.WalletDoNotFound)
@@ -126,7 +133,8 @@ namespace Service.InternalTransfer.Services
                     changeBalanceResult.ErrorCode, JsonConvert.SerializeObject(request));
                 return MEErrorCode.InternalError;
             }
-
+            
+            _logger.LogInformation("Internal transfer on ME completed.  Response: {response}", JsonConvert.SerializeObject(changeBalanceResult));
             return MEErrorCode.Ok;
         }
         
