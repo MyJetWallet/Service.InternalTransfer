@@ -394,7 +394,7 @@ namespace Service.InternalTransfer.Jobs
                         pd.PersonalData.ConfirmPhone == null)
                         return;
 
-                    var phone = pd.PersonalData.Phone.Trim('+');
+                    var phone = pd.PersonalData.Phone;
                     var clientId = pd.PersonalData.Id;
 
                     var wallets =

@@ -62,7 +62,7 @@ namespace Service.InternalTransfer.Services
                 var client = await _personalDataService.GetByPhone(
                     new GetByPhoneRequest()
                     {
-                        Phone = request.ToPhoneNumber.Trim('+')
+                        Phone = request.ToPhoneNumber
                     });
                 if (client.PersonalData != null)
                 {
@@ -120,7 +120,7 @@ namespace Service.InternalTransfer.Services
                 };
                 try
                 {
-                    await ctx.AddAsync(withdrawalEntity);
+                    //await ctx.AddAsync(withdrawalEntity);
                     await ctx.SaveChangesAsync();
                 }
                 catch
