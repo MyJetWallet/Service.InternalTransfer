@@ -120,7 +120,7 @@ namespace Service.InternalTransfer.Services
                 };
                 try
                 {
-                    //await ctx.AddAsync(withdrawalEntity);
+                    await ctx.AddAsync(withdrawalEntity);
                     await ctx.SaveChangesAsync();
                 }
                 catch
