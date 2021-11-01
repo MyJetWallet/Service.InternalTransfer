@@ -242,7 +242,7 @@ namespace Service.InternalTransfer.Jobs
                     }
                     catch (Exception ex)
                     {
-                        await HandleError(transfer, ex);
+                        await HandleError(transfer, ex, false);
                     }
 
                 await context.UpdateAsync(transfers);
