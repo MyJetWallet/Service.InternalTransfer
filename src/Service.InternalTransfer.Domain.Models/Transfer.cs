@@ -69,5 +69,6 @@ namespace Service.InternalTransfer.Domain.Models
         [DataMember(Order = 22)] public bool Cancelling { get; set; }
         [DataMember(Order = 23)] public  MEErrorCode MeErrorCode { get; set; }
         [DataMember(Order = 24)] public string SenderName { get; set; }
+        [DataMember(Order = 25)] public DateTime LastTs { get; set; }
     }
 }
