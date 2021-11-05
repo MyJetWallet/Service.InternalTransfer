@@ -78,6 +78,8 @@ public class DatabaseContext : DbContext
 
             modelBuilder.Entity<TransferEntity>().HasIndex(e => e.Status);
             modelBuilder.Entity<TransferEntity>().HasIndex(e => e.TransactionId).IsUnique();
+
+            modelBuilder.Entity<TransferEntity>().HasIndex(e => e.LastTs);
         }
 
         public async Task<int> InsertAsync(TransferEntity entity)
