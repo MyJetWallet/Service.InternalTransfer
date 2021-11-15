@@ -1,16 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
+using MyJetWallet.Sdk.Postgres;
 using MyJetWallet.Sdk.Service;
 using Service.InternalTransfer.Domain.Models;
 using Service.InternalTransfer.Postgres.Models;
 
 namespace Service.InternalTransfer.Postgres
 {
-public class DatabaseContext : DbContext
+public class DatabaseContext : MyDbContext
     {
         public const string Schema = "internal-transfers";
 
@@ -23,7 +22,6 @@ public class DatabaseContext : DbContext
         }
 
         public DbSet<TransferEntity> Transfers { get; set; }
-        public static ILoggerFactory LoggerFactory { get; set; }
 
         public static DatabaseContext Create(DbContextOptionsBuilder<DatabaseContext> options)
         {
@@ -32,11 +30,6 @@ public class DatabaseContext : DbContext
             var ctx = new DatabaseContext(options.Options) {_activity = activity};
 
             return ctx;
-        }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            if (LoggerFactory != null) optionsBuilder.UseLoggerFactory(LoggerFactory).EnableSensitiveDataLogging();
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
