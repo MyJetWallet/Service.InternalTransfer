@@ -9,7 +9,7 @@
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
-      <PackageReference Include="MyJetWallet.Sdk.Postgres" Version="2.0.5" />
+      <PackageReference Include="MyJetWallet.Sdk.Postgres" Version="2.0.8" />
       <PackageReference Include="MyJetWallet.Sdk.Service" Version="2.0.2" />
     </ItemGroup>
 
