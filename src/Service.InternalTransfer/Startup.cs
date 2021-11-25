@@ -24,48 +24,26 @@ namespace Service.InternalTransfer
     {
         public void ConfigureServices(IServiceCollection services)
         {
-            services.BindCodeFirstGrpc();
-
-            services.AddHostedService<ApplicationLifetimeManager>();
+            services.ConfigureJetWallet<ApplicationLifetimeManager>(Program.Settings.ZipkinUrl);
 
             DatabaseContext.LoggerFactory = Program.LogFactory;
             services.AddDatabase(DatabaseContext.Schema, Program.Settings.PostgresConnectionString,
                 o => new DatabaseContext(o));
             DatabaseContext.LoggerFactory = null;
             
-            services.AddMyTelemetry("SP-", Program.Settings.ZipkinUrl);
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
-
-            app.UseRouting();
-
-            app.UseMetricServer();
-
-            app.BindServicesTree(Assembly.GetExecutingAssembly());
-
-            app.BindIsAlive();
-
-            app.UseEndpoints(endpoints =>
+            app.ConfigureJetWallet(env, endpoints =>
             {
                 endpoints.MapGrpcSchema<TransferByPhoneService, ITransferByPhoneService>();
-
-                endpoints.MapGrpcSchemaRegistry();
-
-                endpoints.MapGet("/", async context =>
-                {
-                    await context.Response.WriteAsync("Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
-                });
             });
         }
 
         public void ConfigureContainer(ContainerBuilder builder)
         {
+            builder.ConfigureJetWallet();
             builder.RegisterModule<SettingsModule>();
             builder.RegisterModule<ServiceModule>();
         }

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -60,15 +61,15 @@ public class DatabaseContext : MyDbContext
             modelBuilder.Entity<TransferEntity>().Property(e => e.MatchingEngineId).HasMaxLength(256).IsRequired(false);
             modelBuilder.Entity<TransferEntity>().Property(e => e.LastError).HasMaxLength(2048).IsRequired(false);
             modelBuilder.Entity<TransferEntity>().Property(e => e.RetriesCount).HasDefaultValue(0);
-            modelBuilder.Entity<TransferEntity>().Property(e => e.EventDate);
+            modelBuilder.Entity<TransferEntity>().Property(e => e.EventDate).HasDefaultValue(DateTime.MinValue);;
             modelBuilder.Entity<TransferEntity>().Property(e => e.ClientIp).HasMaxLength(64).IsRequired(false);
             modelBuilder.Entity<TransferEntity>().Property(e => e.ClientLang).HasMaxLength(64).IsRequired(false);
-            modelBuilder.Entity<TransferEntity>().Property(e => e.NotificationTime);
+            modelBuilder.Entity<TransferEntity>().Property(e => e.NotificationTime).HasDefaultValue(DateTime.MinValue);
             modelBuilder.Entity<TransferEntity>().Property(e => e.RefundTransactionId).HasMaxLength(256).IsRequired(false);
             modelBuilder.Entity<TransferEntity>().Property(e => e.MeErrorCode).HasDefaultValue(MEErrorCode.Ok);
             modelBuilder.Entity<TransferEntity>().Property(e => e.WorkflowState).HasDefaultValue(WorkflowState.OK);
             modelBuilder.Entity<TransferEntity>().Property(e => e.SenderName).HasMaxLength(256).IsRequired(false);
-
+            modelBuilder.Entity<TransferEntity>().Property(e=>e.LastTs).HasDefaultValue(DateTime.MinValue);
             modelBuilder.Entity<TransferEntity>().HasIndex(e => e.Status);
             modelBuilder.Entity<TransferEntity>().HasIndex(e => e.TransactionId).IsUnique();
 
