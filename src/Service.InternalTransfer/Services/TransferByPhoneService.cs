@@ -54,6 +54,11 @@ namespace Service.InternalTransfer.Services
             
             try
             {
+
+                var phoneNumber = string.IsNullOrWhiteSpace(request.ToPhoneNumber)
+                    ? $"{request.PhoneCode}{request.PhoneNumber}" 
+                    : request.ToPhoneNumber;
+                
                 string destinationWallet = null;
                 string destinationClient = null;
                 string senderPhoneNumber = null;
@@ -62,7 +67,7 @@ namespace Service.InternalTransfer.Services
                 var client = await _personalDataService.GetByPhone(
                     new GetByPhoneRequest()
                     {
-                        Phone = request.ToPhoneNumber
+                        Phone = phoneNumber
                     });
                 if (client.PersonalData != null)
                 {
@@ -110,7 +115,7 @@ namespace Service.InternalTransfer.Services
                     AssetSymbol = request.AssetSymbol,
                     Status = TransferStatus.New,
                     EventDate = DateTime.UtcNow,
-                    DestinationPhoneNumber = request.ToPhoneNumber,
+                    DestinationPhoneNumber = phoneNumber,
                     ClientIp = request.ClientIp,
                     ClientLang = request.ClientLang,
                     DestinationWalletId = destinationWallet,
