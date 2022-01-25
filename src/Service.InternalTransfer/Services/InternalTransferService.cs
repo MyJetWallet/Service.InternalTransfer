@@ -93,7 +93,7 @@ namespace Service.InternalTransfer.Services
 
 
         private async Task<MEErrorCode> SendTransferAsync(string clientId, string fromWalletId, string toWalletId,
-            string transactionId, double amount, string asset, string brokerId)
+            string transactionId, decimal amount, string asset, string brokerId)
         {
             var request = new InternalTransferGrpcRequest
             {

@@ -6,7 +6,7 @@ namespace Service.InternalTransfer.Domain.Models
     [DataContract]
     public class Transfer
     {
-        public Transfer(long id, string brokerId, string clientId, string walletId, string transactionId, double amount, string assetSymbol, string senderPhoneNumber, string destinationPhoneNumber, string destinationClientId, TransferStatus status, string matchingEngineId, string lastError, int retriesCount, DateTime eventDate, string clientLang, string clientIp, DateTime notificationTime, WorkflowState workflowState, string refundTransactionId, bool cancelling, MEErrorCode meErrorCode, string destinationWalletId, string senderName)
+        public Transfer(long id, string brokerId, string clientId, string walletId, string transactionId, decimal amount, string assetSymbol, string senderPhoneNumber, string destinationPhoneNumber, string destinationClientId, TransferStatus status, string matchingEngineId, string lastError, int retriesCount, DateTime eventDate, string clientLang, string clientIp, DateTime notificationTime, WorkflowState workflowState, string refundTransactionId, bool cancelling, MEErrorCode meErrorCode, string destinationWalletId, string senderName)
         {
             Id = id;
             BrokerId = brokerId;
@@ -50,7 +50,7 @@ namespace Service.InternalTransfer.Domain.Models
         [DataMember(Order = 3)] public string ClientId { get; set; }
         [DataMember(Order = 4)] public string WalletId { get; set; }
         [DataMember(Order = 5)] public string TransactionId { get; set; }
-        [DataMember(Order = 6)] public double Amount { get; set; }
+        [DataMember(Order = 6)] public decimal Amount { get; set; }
         [DataMember(Order = 7)] public string AssetSymbol { get; set; }
         [DataMember(Order = 8)] public string SenderPhoneNumber { get; set; }
         [DataMember(Order = 9)] public string DestinationPhoneNumber { get; set; }
