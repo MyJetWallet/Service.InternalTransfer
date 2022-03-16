@@ -17,12 +17,12 @@ namespace Service.InternalTransfer.Modules
     {
         protected override void Load(ContainerBuilder builder)
         {
-            var noSqlClient = builder.CreateNoSqlClient(Program.ReloadedSettings(e => e.MyNoSqlReaderHostPort));
+            var noSqlClient = builder.CreateNoSqlClient(() => Program.Settings.MyNoSqlReaderHostPort);
             builder.RegisterSpotChangeBalanceGatewayClient(Program.Settings.ChangeBalanceGatewayGrpcServiceUrl);
             builder.RegisterClientWalletsClients(noSqlClient, Program.Settings.ClientWalletsGrpcServiceUrl);
             builder.RegisterVerificationCodesClient(Program.Settings.VerificationCodesGrpcUrl);
             
-            var spotServiceBusClient = builder.RegisterMyServiceBusTcpClient(Program.ReloadedSettings(e => e.SpotServiceBusHostPort), Program.LogFactory);
+            var spotServiceBusClient = builder.RegisterMyServiceBusTcpClient(() => Program.Settings.SpotServiceBusHostPort, Program.LogFactory);
             builder.RegisterMyServiceBusPublisher<Transfer>(spotServiceBusClient, Transfer.TopicName, false);
 
             var queueName = "Spot-Internal-Transfer-Service";

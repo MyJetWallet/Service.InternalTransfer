@@ -142,7 +142,7 @@ namespace Service.InternalTransfer.Jobs
 
 
                 var whitelist = new List<string>();
-                var whitelistString = Program.ReloadedSettings(e => e.WhitelistedPhones).Invoke();
+                var whitelistString = Program.Settings.WhitelistedPhones;
                 if(!string.IsNullOrWhiteSpace(whitelistString))
                     whitelist = whitelistString.Split(';').ToList();
 
