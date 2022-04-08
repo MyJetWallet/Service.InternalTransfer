@@ -63,16 +63,26 @@ namespace Service.InternalTransfer.Services
                 string senderPhoneNumber = null;
                 string senderName = null;
                 var receiverIsRegistered = false;
-                var client = await _personalDataService.GetByPhone(
-                    new GetByPhoneRequest()
-                    {
-                        Phone = phoneNumber
-                    });
-                if (client.PersonalData != null)
+                var clients = await _personalDataService.GetByPhoneList(new GetByPhoneRequest()
                 {
-                    destinationClient = client.PersonalData.Id;
+                    Phone = phoneNumber
+                });
+                
+                if (clients.PersonalDatas.Count() != 1)
+                {
+                    _logger.LogError("More than one client found for phone number {phone}", phoneNumber);
+                    return new InternalTransferResponse()
+                    {
+                        ErrorCode = MEErrorCode.InvalidPhone
+                    };
+                }
 
-                    var walletResponse = await _clientWalletService.GetWalletsByClient(new JetClientIdentity(request.BrokerId, client.PersonalData.BrandId, client.PersonalData.Id));
+                var client = clients.PersonalDatas.SingleOrDefault();
+                if (client != null)
+                {
+                    destinationClient = client.Id;
+
+                    var walletResponse = await _clientWalletService.GetWalletsByClient(new JetClientIdentity(request.BrokerId, client.BrandId, client.Id));
                     
                     if (!walletResponse.Wallets.Any())
                     {

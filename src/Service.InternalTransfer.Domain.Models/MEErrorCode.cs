@@ -8,6 +8,6 @@ namespace Service.InternalTransfer.Domain.Models
         AssetDoNotFound,
         AssetIsDisabled,
         WalletDoNotFound,
-        InvalidAddress,
+        InvalidPhone,
     }
 }
