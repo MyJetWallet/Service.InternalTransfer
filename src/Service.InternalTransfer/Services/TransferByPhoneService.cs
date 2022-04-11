@@ -68,7 +68,7 @@ namespace Service.InternalTransfer.Services
                     Phone = phoneNumber
                 });
                 
-                if (clients.PersonalDatas.Count() != 1)
+                if (clients.PersonalDatas?.Count() > 1)
                 {
                     _logger.LogError("More than one client found for phone number {phone}", phoneNumber);
                     return new InternalTransferResponse()
@@ -77,7 +77,7 @@ namespace Service.InternalTransfer.Services
                     };
                 }
 
-                var client = clients.PersonalDatas.SingleOrDefault();
+                var client = clients.PersonalDatas?.SingleOrDefault();
                 if (client != null)
                 {
                     destinationClient = client.Id;
