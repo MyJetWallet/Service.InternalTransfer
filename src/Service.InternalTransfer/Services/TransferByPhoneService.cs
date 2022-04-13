@@ -277,11 +277,35 @@ namespace Service.InternalTransfer.Services
 
         public async Task<GetTransfersResponse> GetTransfers(GetTransfersRequest request)
         {
+            request.AddToActivityAsJsonTag("request-data");
+            _logger.LogInformation("Receive GetTransfers request: {JsonRequest}", JsonConvert.SerializeObject(request));
+            
             try
             {
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
-                var transfers = await context.Transfers
-                    .Where(e => e.Id > request.LastId)
+                var query = context.Transfers.AsNoTracking();
+                
+                if (request.LastId > 0)
+                {
+                    query = query.Where(e => e.Id < request.LastId);
+                }
+                
+                if (!string.IsNullOrWhiteSpace(request.WalletId))
+                {
+                    query = query.Where(e => e.WalletId == request.WalletId);
+                }
+                
+                if (!string.IsNullOrWhiteSpace(request.AssetSymbol))
+                {
+                    query = query.Where(e => e.AssetSymbol == request.AssetSymbol);
+                }
+
+                if (request.WithdrawalStatus != null)
+                {
+                    query = query.Where(e => e.Status == request.WithdrawalStatus);
+                }
+
+                var transfers = await query
                     .OrderByDescending(e => e.Id)
                     .Take(request.BatchSize)
                     .ToListAsync();
@@ -290,9 +314,10 @@ namespace Service.InternalTransfer.Services
                 {
                     Success = true,
                     Transfers = transfers.Select(e => new Transfer(e)).ToList(),
-                    IdForNextQuery = transfers.Count > 0 ? transfers.Select(e => e.Id).Max() : 0
+                    IdForNextQuery = transfers.Count > 0 ? transfers.Min(d => d.Id) : 0
                 };
 
+                response.Transfers.Count.AddToActivityAsTag("response-count-items");
                 _logger.LogInformation("Return GetTransfers response count items: {count}",
                     response.Transfers.Count);
                 return response;
@@ -300,10 +325,10 @@ namespace Service.InternalTransfer.Services
             catch (Exception exception)
             {
                 _logger.LogError(exception,
-                    "Cannot get GetWithdrawals take: {takeValue}, LastId: {LastId}",
+                    "Cannot get GetTransfers take: {takeValue}, LastId: {LastId}",
                     request.BatchSize, request.LastId);
                 return new GetTransfersResponse {Success = false, ErrorMessage = exception.Message};
-            }        
+            }    
         }
         
         public async Task<ResendTransferVerificationResponse> ResendTransferConfirmationEmail(ResendTransferVerificationRequest request)
