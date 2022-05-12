@@ -17,7 +17,7 @@ namespace Service.InternalTransfer.Modules
     {
         protected override void Load(ContainerBuilder builder)
         {
-            var noSqlClient = builder.CreateNoSqlClient(() => Program.Settings.MyNoSqlReaderHostPort);
+            var noSqlClient = builder.CreateNoSqlClient(Program.Settings.MyNoSqlReaderHostPort, Program.LogFactory);
             builder.RegisterSpotChangeBalanceGatewayClient(Program.Settings.ChangeBalanceGatewayGrpcServiceUrl);
             builder.RegisterClientWalletsClients(noSqlClient, Program.Settings.ClientWalletsGrpcServiceUrl);
             builder.RegisterVerificationCodesClient(Program.Settings.VerificationCodesGrpcUrl);
