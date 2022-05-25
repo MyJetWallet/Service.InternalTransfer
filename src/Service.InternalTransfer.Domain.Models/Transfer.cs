@@ -6,7 +6,12 @@ namespace Service.InternalTransfer.Domain.Models
     [DataContract]
     public class Transfer
     {
-        public Transfer(long id, string brokerId, string clientId, string walletId, string transactionId, decimal amount, string assetSymbol, string senderPhoneNumber, string destinationPhoneNumber, string destinationClientId, TransferStatus status, string matchingEngineId, string lastError, int retriesCount, DateTime eventDate, string clientLang, string clientIp, DateTime notificationTime, WorkflowState workflowState, string refundTransactionId, bool cancelling, MEErrorCode meErrorCode, string destinationWalletId, string senderName)
+        public Transfer(long id, string brokerId, string clientId, string walletId, string transactionId,
+            decimal amount, string assetSymbol, string senderPhoneNumber, string destinationPhoneNumber,
+            string destinationClientId, TransferStatus status, string matchingEngineId, string lastError,
+            int retriesCount, DateTime eventDate, string clientLang, string clientIp, DateTime notificationTime,
+            WorkflowState workflowState, string refundTransactionId, bool cancelling, MEErrorCode meErrorCode,
+            string destinationWalletId, string senderName, string phoneModel)
         {
             Id = id;
             BrokerId = brokerId;
@@ -32,13 +37,18 @@ namespace Service.InternalTransfer.Domain.Models
             Cancelling = cancelling;
             MeErrorCode = meErrorCode;
             SenderName = senderName;
+            PhoneModel = phoneModel;
         }
 
-        public Transfer(Transfer transfer) : this(transfer.Id, transfer.BrokerId, transfer.ClientId, transfer.WalletId, transfer.TransactionId, transfer.Amount, transfer.AssetSymbol, transfer.SenderPhoneNumber, transfer.DestinationPhoneNumber, transfer.DestinationClientId, transfer.Status, transfer.MatchingEngineId, transfer.LastError, transfer.RetriesCount, transfer.EventDate, transfer.ClientLang, transfer.ClientIp, transfer.NotificationTime, transfer.WorkflowState, transfer.RefundTransactionId, transfer.Cancelling, transfer.MeErrorCode, transfer.DestinationWalletId, transfer.SenderName)
+        public Transfer(Transfer transfer) : this(transfer.Id, transfer.BrokerId, transfer.ClientId, transfer.WalletId,
+            transfer.TransactionId, transfer.Amount, transfer.AssetSymbol, transfer.SenderPhoneNumber,
+            transfer.DestinationPhoneNumber, transfer.DestinationClientId, transfer.Status, transfer.MatchingEngineId,
+            transfer.LastError, transfer.RetriesCount, transfer.EventDate, transfer.ClientLang, transfer.ClientIp,
+            transfer.NotificationTime, transfer.WorkflowState, transfer.RefundTransactionId, transfer.Cancelling,
+            transfer.MeErrorCode, transfer.DestinationWalletId, transfer.SenderName, transfer.PhoneModel)
         {
-            
         }
-        
+
         public Transfer()
         {
         }
@@ -67,8 +77,9 @@ namespace Service.InternalTransfer.Domain.Models
         [DataMember(Order = 20)] public WorkflowState WorkflowState { get; set; }
         [DataMember(Order = 21)] public string RefundTransactionId { get; set; }
         [DataMember(Order = 22)] public bool Cancelling { get; set; }
-        [DataMember(Order = 23)] public  MEErrorCode MeErrorCode { get; set; }
+        [DataMember(Order = 23)] public MEErrorCode MeErrorCode { get; set; }
         [DataMember(Order = 24)] public string SenderName { get; set; }
         [DataMember(Order = 25)] public DateTime LastTs { get; set; }
+        [DataMember(Order = 26)] public string PhoneModel { get; set; }
     }
 }

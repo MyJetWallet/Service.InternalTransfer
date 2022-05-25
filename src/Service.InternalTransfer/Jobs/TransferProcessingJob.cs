@@ -164,7 +164,7 @@ namespace Service.InternalTransfer.Jobs
                         }
                         
                         var response = await _verificationService.SendTransferVerificationCodeAsync(
-                            new SendTransferVerificationCodeRequest()
+                            new SendTransferVerificationCodeRequest
                             {
                                 ClientId = transfer.ClientId,
                                 OperationId = transfer.Id.ToString(),
@@ -172,7 +172,10 @@ namespace Service.InternalTransfer.Jobs
                                 AssetSymbol = transfer.AssetSymbol,
                                 Amount = transfer.Amount.ToString(CultureInfo.InvariantCulture),
                                 DestinationPhone = transfer.DestinationPhoneNumber,
-                                IpAddress = transfer.ClientIp
+                                IpAddress = transfer.ClientIp,
+                                PhoneModel = transfer.PhoneModel,
+                                Timestamp = transfer.EventDate.ToString("F"),
+
                             });
 
                         if (!response.IsSuccess && !response.ErrorMessage.Contains("Cannot send again code"))

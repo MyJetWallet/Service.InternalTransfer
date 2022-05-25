@@ -371,7 +371,9 @@ namespace Service.InternalTransfer.Services
                         AssetSymbol = transferEntity.AssetSymbol,
                         Amount = transferEntity.Amount.ToString(CultureInfo.InvariantCulture),
                         DestinationPhone = transferEntity.DestinationPhoneNumber,
-                        IpAddress = transferEntity.ClientIp
+                        IpAddress = transferEntity.ClientIp,
+                        PhoneModel = transferEntity.PhoneModel,
+                        Timestamp = transferEntity.EventDate.ToString("F")
                     });
 
                 if (!response.IsSuccess)
