@@ -130,7 +130,8 @@ namespace Service.InternalTransfer.Services
                     DestinationWalletId = destinationWallet,
                     DestinationClientId = destinationClient,
                     SenderPhoneNumber = senderPhoneNumber,
-                    SenderName = senderName
+                    SenderName = senderName,
+                    PhoneModel = request.PhoneModel
                 };
                 try
                 {
