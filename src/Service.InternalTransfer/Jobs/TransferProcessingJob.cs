@@ -15,6 +15,7 @@ using Newtonsoft.Json;
 using Service.ClientWallets.Grpc;
 using Service.ClientWallets.Grpc.Models;
 using Service.InternalTransfer.Domain.Models;
+using Service.InternalTransfer.Grpc.Models;
 using Service.InternalTransfer.Postgres;
 using Service.InternalTransfer.Postgres.Models;
 using Service.InternalTransfer.Services;
@@ -37,6 +38,7 @@ namespace Service.InternalTransfer.Jobs
         private readonly IPersonalDataServiceGrpc _personalDataService;
         private readonly IClientWalletService _clientWalletService;
         private readonly MyTaskTimer _timer;
+        private readonly InProgressTransfersService _inProgressService;
         
         public TransferProcessingJob(ILogger<TransferProcessingJob> logger, 
             InternalTransferService transferService, 
@@ -45,7 +47,8 @@ namespace Service.InternalTransfer.Jobs
             DbContextOptionsBuilder<DatabaseContext> dbContextOptionsBuilder, IClientWalletService clientWalletService, 
             ISubscriber<IReadOnlyList<PersonalDataUpdateMessage>> personalDataSubscriber, 
             IPersonalDataServiceGrpc personalDataService,
-            ITransferVerificationService verificationService)
+            ITransferVerificationService verificationService, 
+            InProgressTransfersService inProgressService)
         {
             _logger = logger;
             _transferService = transferService;
@@ -54,6 +57,7 @@ namespace Service.InternalTransfer.Jobs
             _clientWalletService = clientWalletService;
             _personalDataService = personalDataService;
             _verificationService = verificationService;
+            _inProgressService = inProgressService;
 
             personalDataSubscriber.Subscribe(HandleTransfersToNewlyRegistered);
             verificationSubscriber.Subscribe(HandleApprovedTransfers);
@@ -184,6 +188,8 @@ namespace Service.InternalTransfer.Jobs
 
                         transfer.Status = TransferStatus.ApprovalPending;
                         transfer.NotificationTime = DateTime.UtcNow;
+
+                        await _inProgressService.GetInProgressTransfers(new InProgressRequest(){ ClientId = transfer.ClientId, Asset = transfer.AssetSymbol});
                         await PublishSuccess(transfer);
                     }
                     catch (Exception ex)
@@ -242,6 +248,7 @@ namespace Service.InternalTransfer.Jobs
                             await _transferService.ExecuteTransfer(transfer);
                         
                         await PublishSuccess(transfer);
+                        await _inProgressService.GetInProgressTransfers(new InProgressRequest(){ ClientId = transfer.ClientId, Asset = transfer.AssetSymbol});
                     }
                     catch (Exception ex)
                     {
@@ -432,6 +439,7 @@ namespace Service.InternalTransfer.Jobs
                             transfer.DestinationWalletId = walletId;
                             await _transferService.ExecuteTransferFromServiceWallet(transfer);
                             await PublishSuccess(transfer);
+                            await _inProgressService.GetInProgressTransfers(new InProgressRequest(){ ClientId = transfer.ClientId, Asset = transfer.AssetSymbol});
                         }
                         catch (Exception ex)
                         {

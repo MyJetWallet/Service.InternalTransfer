@@ -16,7 +16,7 @@ namespace TestApp
             Console.ReadLine();
 
 
-            var factory = new InternalTransferClientFactory("http://localhost:5001");
+            var factory = new InternalTransferClientFactory("http://localhost:5001", null);
             var client = factory.GetTransferByPhoneService();
             //
             // var resp = await  client.TransferByPhone(new TransferByPhoneRequest(){Name = "Alex"});

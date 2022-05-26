@@ -6,6 +6,8 @@ using MyServiceBus.Abstractions;
 using Service.ChangeBalanceGateway.Client;
 using Service.ClientWallets.Client;
 using Service.InternalTransfer.Domain.Models;
+using Service.InternalTransfer.Domain.Models.NoSql;
+using Service.InternalTransfer.Grpc;
 using Service.InternalTransfer.Jobs;
 using Service.InternalTransfer.Services;
 using Service.PersonalData.Client;
@@ -36,6 +38,14 @@ namespace Service.InternalTransfer.Modules
             builder.RegisterPersonalDataClient(Program.Settings.PersonalDataServiceUrl);
             builder.RegisterPersonalDataUpdateSubscriber(spotServiceBusClient, queueName);
 
+            builder.RegisterMyNoSqlWriter<TransfersInProgressNoSqlEntity>(() => Program.Settings.MyNoSqlWriterUrl,
+                TransfersInProgressNoSqlEntity.TableName);
+            
+            builder
+                .RegisterType<InProgressTransfersService>()
+                .AsSelf()
+                .SingleInstance()
+                .AutoActivate();
         }
         
     }

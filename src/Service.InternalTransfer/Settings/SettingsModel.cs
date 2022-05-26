@@ -56,8 +56,8 @@ namespace Service.InternalTransfer.Settings
         [YamlProperty("InternalTransfer.WhitelistedPhones")]
         public string WhitelistedPhones { get; set; }
         
-        
-        
+        [YamlProperty("InternalTransfer.MyNoSqlWriterUrl")]
+        public string MyNoSqlWriterUrl { get; set; }
 
     }
 }
