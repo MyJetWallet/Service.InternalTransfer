@@ -38,6 +38,7 @@ namespace Service.InternalTransfer
             app.ConfigureJetWallet(env, endpoints =>
             {
                 endpoints.MapGrpcSchema<TransferByPhoneService, ITransferByPhoneService>();
+                endpoints.MapGrpcSchema<InProgressTransfersService, IInProgressTransfersService>();
             });
         }
 
