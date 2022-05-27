@@ -179,7 +179,7 @@ namespace Service.InternalTransfer.Jobs
                                 IpAddress = transfer.ClientIp,
                                 PhoneModel = transfer.PhoneModel,
                                 Timestamp = transfer.EventDate.ToString("F"),
-
+                                Location = transfer.Location
                             });
 
                         if (!response.IsSuccess && !response.ErrorMessage.Contains("Cannot send again code"))

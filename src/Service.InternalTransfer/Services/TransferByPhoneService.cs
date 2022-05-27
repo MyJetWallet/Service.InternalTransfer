@@ -53,7 +53,6 @@ namespace Service.InternalTransfer.Services
             
             try
             {
-
                 var phoneNumber = string.IsNullOrWhiteSpace(request.ToPhoneNumber)
                     ? $"{request.PhoneCode}{request.PhoneNumber}" 
                     : request.ToPhoneNumber;
@@ -131,7 +130,8 @@ namespace Service.InternalTransfer.Services
                     DestinationClientId = destinationClient,
                     SenderPhoneNumber = senderPhoneNumber,
                     SenderName = senderName,
-                    PhoneModel = request.PhoneModel
+                    PhoneModel = request.PhoneModel,
+                    Location = request.Location
                 };
                 try
                 {
@@ -374,7 +374,8 @@ namespace Service.InternalTransfer.Services
                         DestinationPhone = transferEntity.DestinationPhoneNumber,
                         IpAddress = transferEntity.ClientIp,
                         PhoneModel = transferEntity.PhoneModel,
-                        Timestamp = transferEntity.EventDate.ToString("F")
+                        Timestamp = transferEntity.EventDate.ToString("F"),
+                        Location = transferEntity.Location
                     });
 
                 if (!response.IsSuccess)

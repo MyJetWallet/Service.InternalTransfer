@@ -18,5 +18,6 @@ namespace Service.InternalTransfer.Grpc.Models
         [DataMember(Order = 11)] public string PhoneCode { get; set; }
         [DataMember(Order = 12)] public string PhoneIso { get; set; }
         [DataMember(Order = 13)] public string PhoneModel { get; set; }
+        [DataMember(Order = 14)] public string Location { get; set; }
     }
 }

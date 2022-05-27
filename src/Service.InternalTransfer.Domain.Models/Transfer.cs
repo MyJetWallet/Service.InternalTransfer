@@ -11,7 +11,7 @@ namespace Service.InternalTransfer.Domain.Models
             string destinationClientId, TransferStatus status, string matchingEngineId, string lastError,
             int retriesCount, DateTime eventDate, string clientLang, string clientIp, DateTime notificationTime,
             WorkflowState workflowState, string refundTransactionId, bool cancelling, MEErrorCode meErrorCode,
-            string destinationWalletId, string senderName, string phoneModel)
+            string destinationWalletId, string senderName, string phoneModel, string location)
         {
             Id = id;
             BrokerId = brokerId;
@@ -38,6 +38,7 @@ namespace Service.InternalTransfer.Domain.Models
             MeErrorCode = meErrorCode;
             SenderName = senderName;
             PhoneModel = phoneModel;
+            Location = location;
         }
 
         public Transfer(Transfer transfer) : this(transfer.Id, transfer.BrokerId, transfer.ClientId, transfer.WalletId,
@@ -45,7 +46,7 @@ namespace Service.InternalTransfer.Domain.Models
             transfer.DestinationPhoneNumber, transfer.DestinationClientId, transfer.Status, transfer.MatchingEngineId,
             transfer.LastError, transfer.RetriesCount, transfer.EventDate, transfer.ClientLang, transfer.ClientIp,
             transfer.NotificationTime, transfer.WorkflowState, transfer.RefundTransactionId, transfer.Cancelling,
-            transfer.MeErrorCode, transfer.DestinationWalletId, transfer.SenderName, transfer.PhoneModel)
+            transfer.MeErrorCode, transfer.DestinationWalletId, transfer.SenderName, transfer.PhoneModel, transfer.Location)
         {
         }
 
@@ -81,5 +82,6 @@ namespace Service.InternalTransfer.Domain.Models
         [DataMember(Order = 24)] public string SenderName { get; set; }
         [DataMember(Order = 25)] public DateTime LastTs { get; set; }
         [DataMember(Order = 26)] public string PhoneModel { get; set; }
+        [DataMember(Order = 27)] public string Location { get; set; }
     }
 }
