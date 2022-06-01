@@ -34,28 +34,33 @@ namespace Service.InternalTransfer.Services
         {
             try
             {
+                var total = 0m;
+                var count = 0;
+
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
-                var intentions = await context.Transfers.Where(t => t.AssetSymbol == request.Asset && t.ClientId == request.ClientId && InProgressStatuses.Contains(t.Status) ).ToListAsync();
+                var intentions = await context.Transfers.Where(t =>
+                    t.AssetSymbol == request.Asset && t.ClientId == request.ClientId &&
+                    InProgressStatuses.Contains(t.Status)).ToListAsync();
                 if (intentions.Any())
                 {
-                    var total = intentions.Sum(t => t.Amount);
-                    var count = intentions.Count;
-
-                    await _writer.InsertOrReplaceAsync(
-                        TransfersInProgressNoSqlEntity.Create(request.ClientId, request.Asset, total, count));
-                    
-                    return new InProgressResponse
-                    {
-                        TotalAmount = total,
-                        TxCount = count
-                    };
+                    total = intentions.Sum(t => t.Amount);
+                    count = intentions.Count;
                 }
+
+                await _writer.InsertOrReplaceAsync(
+                    TransfersInProgressNoSqlEntity.Create(request.ClientId, request.Asset, total, count));
+
+                return new InProgressResponse
+                {
+                    TotalAmount = total,
+                    TxCount = count
+                };
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "When calculating in-progress buys for request {request}", request.ToJson());
             }
-            
+
             return new InProgressResponse()
             {
                 TotalAmount = 0,
