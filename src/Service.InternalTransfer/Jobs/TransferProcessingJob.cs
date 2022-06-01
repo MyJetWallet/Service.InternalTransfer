@@ -189,7 +189,6 @@ namespace Service.InternalTransfer.Jobs
                         transfer.Status = TransferStatus.ApprovalPending;
                         transfer.NotificationTime = DateTime.UtcNow;
 
-                        await _inProgressService.GetInProgressTransfers(new InProgressRequest(){ ClientId = transfer.ClientId, Asset = transfer.AssetSymbol});
                         await PublishSuccess(transfer);
                     }
                     catch (Exception ex)
@@ -248,7 +247,6 @@ namespace Service.InternalTransfer.Jobs
                             await _transferService.ExecuteTransfer(transfer);
                         
                         await PublishSuccess(transfer);
-                        await _inProgressService.GetInProgressTransfers(new InProgressRequest(){ ClientId = transfer.ClientId, Asset = transfer.AssetSymbol});
                     }
                     catch (Exception ex)
                     {
@@ -278,7 +276,7 @@ namespace Service.InternalTransfer.Jobs
         
         private async Task HandleCancellingTransfers()
         {
-            using var activity = MyTelemetry.StartActivity("Handle waiting for user transfers");
+            using var activity = MyTelemetry.StartActivity("Handle cancelling transfers");
             try
             {
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
@@ -289,7 +287,7 @@ namespace Service.InternalTransfer.Jobs
                 var transfers = await context.Transfers.Where(e =>
                     e.Status == TransferStatus.WaitingForUser
                     && e.WorkflowState != WorkflowState.Failed).ToListAsync();
-                
+                var count = 0;
                 foreach (var transfer in transfers)
                     try
                     {
@@ -298,6 +296,7 @@ namespace Service.InternalTransfer.Jobs
                         
                         await _transferService.RefundTransfer(transfer);
                         await PublishSuccess(transfer);
+                        count++;
                     }
                     catch (Exception ex)
                     {
@@ -309,14 +308,14 @@ namespace Service.InternalTransfer.Jobs
                 transfers.Count.AddToActivityAsTag("transfers-count");
 
                 sw.Stop();
-                if (transfers.Count > 0)
-                    _logger.LogInformation("Handled {countTrade} waiting for user transfers. Time: {timeRangeText}",
-                        transfers.Count,
+                if (count > 0)
+                    _logger.LogInformation("Handled {countTrade} cancelling transfers. Time: {timeRangeText}",
+                        count,
                         sw.Elapsed.ToString());
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Cannot Handle waiting for user  transfers");
+                _logger.LogError(ex, "Cannot Handle cancelling  transfers");
                 ex.FailActivity();
                 throw;
             }
@@ -338,6 +337,8 @@ namespace Service.InternalTransfer.Jobs
                 var transfers = await context.Transfers.Where(e =>
                     e.Status == TransferStatus.ApprovalPending
                     && e.WorkflowState != WorkflowState.Failed).ToListAsync();
+
+                var count = 0;
                 
                 foreach (var transfer in transfers)
                     try
@@ -346,6 +347,7 @@ namespace Service.InternalTransfer.Jobs
                         {
                             transfer.Status = TransferStatus.Cancelled;
                             await PublishSuccess(transfer);
+                            count++;
                             continue;
                         }
                         
@@ -355,6 +357,7 @@ namespace Service.InternalTransfer.Jobs
                             transfer.Status = TransferStatus.Cancelled;
                             transfer.LastError = "Expired";
                             await PublishSuccess(transfer);
+                            count++;
                         }
                     }
                     catch (Exception ex)
@@ -367,9 +370,9 @@ namespace Service.InternalTransfer.Jobs
                 transfers.Count.AddToActivityAsTag("transfers-count");
 
                 sw.Stop();
-                if (transfers.Count > 0)
+                if (count > 0)
                     _logger.LogInformation("Handled {countTrade} expiring transfers. Time: {timeRangeText}",
-                        transfers.Count,
+                        count,
                         sw.Elapsed.ToString());
             }
             catch (Exception ex)
@@ -439,7 +442,6 @@ namespace Service.InternalTransfer.Jobs
                             transfer.DestinationWalletId = walletId;
                             await _transferService.ExecuteTransferFromServiceWallet(transfer);
                             await PublishSuccess(transfer);
-                            await _inProgressService.GetInProgressTransfers(new InProgressRequest(){ ClientId = transfer.ClientId, Asset = transfer.AssetSymbol});
                         }
                         catch (Exception ex)
                         {
@@ -518,6 +520,16 @@ namespace Service.InternalTransfer.Jobs
                 transfer.LastError = lastError;
                 transfer.WorkflowState = state;
                 throw;
+            }
+
+            try
+            {
+                await _inProgressService.GetInProgressTransfers(new InProgressRequest()
+                    {ClientId = transfer.ClientId, Asset = transfer.AssetSymbol});
+            }
+            catch
+            {
+                _logger.LogError("Unable to calculate inprogress transfers for client {client} and asset {asset}", transfer.ClientId, transfer.AssetSymbol);
             }
         }
 
