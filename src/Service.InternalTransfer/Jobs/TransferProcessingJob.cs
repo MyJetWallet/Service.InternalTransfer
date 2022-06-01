@@ -197,6 +197,7 @@ namespace Service.InternalTransfer.Jobs
                     }
 
                 await context.UpdateAsync(transfers);
+                await UpdateInProgressCache(transfers);
 
                 transfers.Count.AddToActivityAsTag("transfers-count");
 
@@ -254,6 +255,7 @@ namespace Service.InternalTransfer.Jobs
                     }
 
                 await context.UpdateAsync(transfers);
+                await UpdateInProgressCache(transfers);
 
                 transfers.Count.AddToActivityAsTag("transfers-count");
 
@@ -303,15 +305,18 @@ namespace Service.InternalTransfer.Jobs
                         await HandleError(transfer, ex);
                     }
 
-                await context.UpdateAsync(transfers);
-
-                transfers.Count.AddToActivityAsTag("transfers-count");
-
-                sw.Stop();
                 if (count > 0)
+                {
+                    await context.UpdateAsync(transfers);
+                    await UpdateInProgressCache(transfers);
+
+                    transfers.Count.AddToActivityAsTag("transfers-count");
+
                     _logger.LogInformation("Handled {countTrade} cancelling transfers. Time: {timeRangeText}",
                         count,
                         sw.Elapsed.ToString());
+                }
+                sw.Stop();
             }
             catch (Exception ex)
             {
@@ -365,15 +370,18 @@ namespace Service.InternalTransfer.Jobs
                         await HandleError(transfer, ex);
                     }
 
-                await context.UpdateAsync(transfers);
-
-                transfers.Count.AddToActivityAsTag("transfers-count");
-
-                sw.Stop();
                 if (count > 0)
+                {
+                    await context.UpdateAsync(transfers);
+                    await UpdateInProgressCache(transfers);
+
+                    transfers.Count.AddToActivityAsTag("transfers-count");
+
                     _logger.LogInformation("Handled {countTrade} expiring transfers. Time: {timeRangeText}",
                         count,
                         sw.Elapsed.ToString());
+                }
+                sw.Stop();
             }
             catch (Exception ex)
             {
@@ -449,7 +457,8 @@ namespace Service.InternalTransfer.Jobs
                         }
 
                     await context.UpdateAsync(transfers);
-
+                    await UpdateInProgressCache(transfers);
+                    
                     transfers.Count.AddToActivityAsTag("transfers-count");
 
                     sw.Stop();
@@ -521,16 +530,6 @@ namespace Service.InternalTransfer.Jobs
                 transfer.WorkflowState = state;
                 throw;
             }
-
-            try
-            {
-                await _inProgressService.GetInProgressTransfers(new InProgressRequest()
-                    {ClientId = transfer.ClientId, Asset = transfer.AssetSymbol});
-            }
-            catch
-            {
-                _logger.LogError("Unable to calculate inprogress transfers for client {client} and asset {asset}", transfer.ClientId, transfer.AssetSymbol);
-            }
         }
 
         private async Task CreateBufferWallet()
@@ -550,6 +549,23 @@ namespace Service.InternalTransfer.Jobs
             }
         }
 
+        
+        private async Task UpdateInProgressCache(List<TransferEntity> transfers)
+        {
+            foreach (var transferEntity in transfers)
+            {
+                try
+                {
+                    await _inProgressService.GetInProgressTransfers(new InProgressRequest()
+                        {ClientId = transferEntity.ClientId, Asset = transferEntity.AssetSymbol});
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e, "Unable to calculate in-progress transfers for client {clientId} and asset {assetId}", transferEntity.ClientId, transferEntity.AssetSymbol);
+                }
+            }
+        }
+        
         public void Start()
         {
             CreateBufferWallet();
