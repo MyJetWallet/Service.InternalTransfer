@@ -14,7 +14,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="6.0.6" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.1" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
-    <PackageReference Include="MyJetWallet.Domain" Version="1.2.1" />
+    <PackageReference Include="MyJetWallet.Domain" Version="1.2.2" />
     <PackageReference Include="MyJetWallet.Sdk.Grpc" Version="2.0.0" />
     <PackageReference Include="MyJetWallet.Sdk.GrpcMetrics" Version="2.0.4" />
     <PackageReference Include="MyJetWallet.Sdk.GrpcSchema" Version="1.0.6" />
@@ -22,7 +22,7 @@
     <PackageReference Include="MyJetWallet.Sdk.Postgres" Version="2.2.0" />
     <PackageReference Include="MyJetWallet.Sdk.Service" Version="2.2.4" />
     <PackageReference Include="MyJetWallet.Sdk.ServiceBus" Version="2.2.4" />
-    <PackageReference Include="MyJetWallet.Service.ChangeBalanceGateway.Client" Version="2.2.2" />
+    <PackageReference Include="MyJetWallet.Service.ChangeBalanceGateway.Client" Version="2.3.0" />
     <PackageReference Include="MyJetWallet.Service.PersonalData.Client" Version="1.2.3" />
     <PackageReference Include="MyJetWallet.Service.ClientWallets.Client" Version="1.4.2" />
     <PackageReference Include="MyJetWallet.Service.VerificationCodes.Client" Version="1.4.1" />
