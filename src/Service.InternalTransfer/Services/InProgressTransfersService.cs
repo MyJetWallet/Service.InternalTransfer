@@ -21,7 +21,7 @@ namespace Service.InternalTransfer.Services
         private readonly IMyNoSqlServerDataWriter<TransfersInProgressNoSqlEntity> _writer;
 
         private static readonly List<TransferStatus> InProgressStatuses = new()
-            {TransferStatus.New, TransferStatus.WaitingForUser, TransferStatus.ApprovalPending, TransferStatus.WaitingForUser};
+            {TransferStatus.WaitingForUser, TransferStatus.Pending};
 
         public InProgressTransfersService(ILogger<InProgressTransfersService> logger, DbContextOptionsBuilder<DatabaseContext> dbContextOptionsBuilder, IMyNoSqlServerDataWriter<TransfersInProgressNoSqlEntity> writer)
         {
