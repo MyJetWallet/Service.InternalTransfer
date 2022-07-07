@@ -296,6 +296,26 @@ namespace Service.InternalTransfer.Services
                     query = query.Where(e => e.WalletId == request.WalletId);
                 }
                 
+                if (!string.IsNullOrWhiteSpace(request.TransactionId))
+                {
+                    query = query.Where(e => e.TransactionId == request.TransactionId);
+                }
+                
+                if (!string.IsNullOrWhiteSpace(request.ClientId))
+                {
+                    query = query.Where(e => e.ClientId == request.ClientId);
+                }
+                
+                if (request.EventDateFrom != null)
+                {
+                    query = query.Where(e => e.EventDate >= request.EventDateFrom);
+                }
+                
+                if (request.EventDateTo != null)
+                {
+                    query = query.Where(e => e.EventDate <= request.EventDateTo);
+                }
+                
                 if (!string.IsNullOrWhiteSpace(request.AssetSymbol))
                 {
                     query = query.Where(e => e.AssetSymbol == request.AssetSymbol);
