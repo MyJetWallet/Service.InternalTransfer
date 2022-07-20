@@ -167,9 +167,18 @@ namespace Service.InternalTransfer.Services
 
         public async Task<Transfer> GetTransferById(GetTransferByIdRequest request)
         {
-            await using var ctx = DatabaseContext.Create(_dbContextOptionsBuilder);
-            var entity = await ctx.Transfers.Where(t=>t.Id == long.Parse(request.TransferId)).FirstOrDefaultAsync();
-            return new Transfer(entity);
+            try
+            {
+                await using var ctx = DatabaseContext.Create(_dbContextOptionsBuilder);
+                var entity = await ctx.Transfers.Where(t => t.Id == long.Parse(request.TransferId))
+                    .FirstAsync();
+                return new Transfer(entity);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Unable to find transfer with id {transferId}", request.TransferId);
+                throw;
+            }
         }
 
         public async Task<CancelTransferResponse> CancelTransfer(CancelTransferRequest request)
